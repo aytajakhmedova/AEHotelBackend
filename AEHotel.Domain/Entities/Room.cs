@@ -1,8 +1,9 @@
+using AEHotel.Domain.Common;
+
 namespace AEHotel.Domain.Entities;
 
-public class Room
+public class Room : BaseEntity
 {
-    public int Id { get; set; }
 
     public int HotelId { get; set; }
 
@@ -21,6 +22,10 @@ public class Room
     public decimal PricePerNight { get; set; }
 
     public bool Available { get; set; } = true;
+
+    public string ImageFile { get; set; } = string.Empty;
+
+    public string AmenitiesJson { get; set; } = "[]";
 
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }

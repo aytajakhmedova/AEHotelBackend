@@ -1,21 +1,19 @@
+using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Domain.Entities;
 using AEHotel.Repository.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace AEHotel.Repository.Hotels;
+namespace AEHotel.Repository.Repositories;
 
-public class HotelRepository : IHotelRepository
+public class HotelRepository : BaseRepository<Hotel>, IHotelRepository
 {
-    private readonly AppDbContext _context;
-
-    public HotelRepository(AppDbContext context)
+    public HotelRepository(AppDbContext context) : base(context)
     {
-        _context = context;
     }
 
     public async Task<IReadOnlyList<Hotel>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Hotels
+        return await Context.Hotels
             .AsNoTracking()
             .Include(hotel => hotel.Rooms)
             .OrderBy(hotel => hotel.Id)
@@ -24,7 +22,7 @@ public class HotelRepository : IHotelRepository
 
     public async Task<Hotel?> GetByIdAsync(int id, bool includeRooms, bool tracking, CancellationToken cancellationToken = default)
     {
-        IQueryable<Hotel> query = _context.Hotels;
+        IQueryable<Hotel> query = Context.Hotels;
 
         if (includeRooms)
         {
@@ -41,12 +39,12 @@ public class HotelRepository : IHotelRepository
 
     public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
     {
-        return _context.Hotels.AnyAsync(hotel => hotel.Id == id, cancellationToken);
+        return Context.Hotels.AnyAsync(hotel => hotel.Id == id, cancellationToken);
     }
 
     public Task<string?> GetTitleAsync(int id, CancellationToken cancellationToken = default)
     {
-        return _context.Hotels
+        return Context.Hotels
             .Where(hotel => hotel.Id == id)
             .Select(hotel => hotel.Title)
             .FirstOrDefaultAsync(cancellationToken);
@@ -54,26 +52,11 @@ public class HotelRepository : IHotelRepository
 
     public Task<bool> HasReservationsAsync(int hotelId, CancellationToken cancellationToken = default)
     {
-        return _context.Reservations.AnyAsync(reservation => reservation.HotelId == hotelId, cancellationToken);
-    }
-
-    public async Task AddAsync(Hotel hotel, CancellationToken cancellationToken = default)
-    {
-        await _context.Hotels.AddAsync(hotel, cancellationToken);
-    }
-
-    public void Remove(Hotel hotel)
-    {
-        _context.Hotels.Remove(hotel);
+        return Context.Reservations.AnyAsync(reservation => reservation.HotelId == hotelId, cancellationToken);
     }
 
     public async Task LoadRoomsAsync(Hotel hotel, CancellationToken cancellationToken = default)
     {
-        await _context.Entry(hotel).Collection(entry => entry.Rooms).LoadAsync(cancellationToken);
-    }
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        return _context.SaveChangesAsync(cancellationToken);
+        await Context.Entry(hotel).Collection(entry => entry.Rooms).LoadAsync(cancellationToken);
     }
 }

@@ -1,8 +1,9 @@
+using AEHotel.Domain.Common;
+
 namespace AEHotel.Domain.Entities;
 
-public class Reservation
+public class Reservation : BaseEntity
 {
-    public int Id { get; set; }
 
     public string Code { get; set; } = string.Empty;
 
@@ -15,6 +16,10 @@ public class Reservation
     public int RoomId { get; set; }
 
     public Room? Room { get; set; }
+
+    public string? UserId { get; set; }
+
+    public AppUser? User { get; set; }
 
     public string GuestName { get; set; } = string.Empty;
 

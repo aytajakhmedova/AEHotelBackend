@@ -1,8 +1,9 @@
+using AEHotel.Domain.Common;
+
 namespace AEHotel.Domain.Entities;
 
-public class Hotel
+public class Hotel : BaseEntity
 {
-    public int Id { get; set; }
 
     public string Title { get; set; } = string.Empty;
 
@@ -29,6 +30,10 @@ public class Hotel
     public string CheckInTime { get; set; } = "14:00";
 
     public string CheckOutTime { get; set; } = "12:00";
+
+    public string ImageFile { get; set; } = string.Empty;
+
+    public string AmenitiesJson { get; set; } = "[]";
 
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
 

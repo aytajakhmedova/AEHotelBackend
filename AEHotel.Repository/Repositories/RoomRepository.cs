@@ -1,21 +1,19 @@
+using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Domain.Entities;
 using AEHotel.Repository.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace AEHotel.Repository.Rooms;
+namespace AEHotel.Repository.Repositories;
 
-public class RoomRepository : IRoomRepository
+public class RoomRepository : BaseRepository<Room>, IRoomRepository
 {
-    private readonly AppDbContext _context;
-
-    public RoomRepository(AppDbContext context)
+    public RoomRepository(AppDbContext context) : base(context)
     {
-        _context = context;
     }
 
     public async Task<IReadOnlyList<Room>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Rooms
+        return await Context.Rooms
             .AsNoTracking()
             .OrderBy(room => room.Id)
             .ToListAsync(cancellationToken);
@@ -23,7 +21,7 @@ public class RoomRepository : IRoomRepository
 
     public async Task<IReadOnlyList<Room>> GetByHotelIdAsync(int hotelId, CancellationToken cancellationToken = default)
     {
-        return await _context.Rooms
+        return await Context.Rooms
             .AsNoTracking()
             .Where(room => room.HotelId == hotelId)
             .OrderBy(room => room.Id)
@@ -32,7 +30,7 @@ public class RoomRepository : IRoomRepository
 
     public Task<Room?> GetByIdAsync(int id, bool tracking, CancellationToken cancellationToken = default)
     {
-        IQueryable<Room> query = _context.Rooms;
+        IQueryable<Room> query = Context.Rooms;
 
         if (!tracking)
         {
@@ -44,21 +42,6 @@ public class RoomRepository : IRoomRepository
 
     public Task<bool> HasReservationsAsync(int roomId, CancellationToken cancellationToken = default)
     {
-        return _context.Reservations.AnyAsync(reservation => reservation.RoomId == roomId, cancellationToken);
-    }
-
-    public async Task AddAsync(Room room, CancellationToken cancellationToken = default)
-    {
-        await _context.Rooms.AddAsync(room, cancellationToken);
-    }
-
-    public void Remove(Room room)
-    {
-        _context.Rooms.Remove(room);
-    }
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        return _context.SaveChangesAsync(cancellationToken);
+        return Context.Reservations.AnyAsync(reservation => reservation.RoomId == roomId, cancellationToken);
     }
 }

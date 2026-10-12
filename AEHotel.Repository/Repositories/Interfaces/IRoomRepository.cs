@@ -1,6 +1,6 @@
 using AEHotel.Domain.Entities;
 
-namespace AEHotel.Repository.Rooms;
+namespace AEHotel.Repository.Repositories.Interfaces;
 
 public interface IRoomRepository
 {

@@ -15,16 +15,13 @@ The API listens at `http://localhost:5080`. Swagger UI is available at `http://l
 | Project | Responsibility |
 | --- | --- |
 | `AEHotel.API` | Controllers, CORS, Swagger, and dependency injection composition |
-| `AEHotel.App` | Request and response DTOs |
-| `AEHotel.Domain` | Hotel, room, and reservation entities |
-| `AEHotel.Repository` | Entity Framework Core `DbContext` and repositories |
-| `AEHotel.Service` | Business rules and DTO mapping |
+| `AEHotel.Domain` | `Common/BaseEntity`, `Entities`, and `Configurations` |
+| `AEHotel.Repository` | `Data/AppDbContext`, `Migrations`, and `Repositories` with `Interfaces` |
+| `AEHotel.Service` | `DTOs`, `Exceptions`, `Helpers`, and `Services` with `Interfaces` |
 
 Reference direction:
 
 `AEHotel.API` -> `AEHotel.Service` -> `AEHotel.Repository` -> `AEHotel.Domain`
-
-`AEHotel.API` and `AEHotel.Service` also reference `AEHotel.App`.
 
 ## Database
 

@@ -1,5 +1,5 @@
-using AEHotel.App.Reservations;
-using AEHotel.Service.Reservations;
+using AEHotel.Service.DTOs.Reservations;
+using AEHotel.Service.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;

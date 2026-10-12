@@ -1,5 +1,5 @@
-using AEHotel.App.Hotels;
-using AEHotel.Service.Hotels;
+using AEHotel.Service.DTOs.Hotels;
+using AEHotel.Service.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
@@ -16,16 +16,25 @@ public class HotelsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<HotelResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<HotelResponse>>> GetAll(
+        [FromQuery] DateOnly? checkIn,
+        [FromQuery] DateOnly? checkOut,
+        [FromQuery] int? guests,
+        CancellationToken cancellationToken)
     {
-        var hotels = await _hotelService.GetAllAsync(cancellationToken);
+        var hotels = await _hotelService.GetAllAsync(checkIn, checkOut, guests, cancellationToken);
         return Ok(hotels);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<HotelResponse>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<HotelResponse>> GetById(
+        int id,
+        [FromQuery] DateOnly? checkIn,
+        [FromQuery] DateOnly? checkOut,
+        [FromQuery] int? guests,
+        CancellationToken cancellationToken)
     {
-        var hotel = await _hotelService.GetByIdAsync(id, cancellationToken);
+        var hotel = await _hotelService.GetByIdAsync(id, checkIn, checkOut, guests, cancellationToken);
         return Ok(hotel);
     }
 

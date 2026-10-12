@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11415.280 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.API", "AEHotel.API\AEHotel.API.csproj", "{BB6FB602-78C2-446F-9D07-03155F18D56A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.Domain", "AEHotel.Domain\AEHotel.Domain.csproj", "{A154189C-6502-4A62-A62B-A001573A3047}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.Repository", "AEHotel.Repository\AEHotel.Repository.csproj", "{81E721DE-D40B-4EE8-9550-68D1479E532B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.App", "AEHotel.App\AEHotel.App.csproj", "{8E40DE04-CACA-4455-A23A-1447C472E8BE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.Service", "AEHotel.Service\AEHotel.Service.csproj", "{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}"
 EndProject
@@ -59,18 +57,6 @@ Global
 		{81E721DE-D40B-4EE8-9550-68D1479E532B}.Release|x64.Build.0 = Release|Any CPU
 		{81E721DE-D40B-4EE8-9550-68D1479E532B}.Release|x86.ActiveCfg = Release|Any CPU
 		{81E721DE-D40B-4EE8-9550-68D1479E532B}.Release|x86.Build.0 = Release|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Debug|x64.Build.0 = Debug|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Debug|x86.Build.0 = Debug|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Release|x64.ActiveCfg = Release|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Release|x64.Build.0 = Release|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Release|x86.ActiveCfg = Release|Any CPU
-		{8E40DE04-CACA-4455-A23A-1447C472E8BE}.Release|x86.Build.0 = Release|Any CPU
 		{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -86,5 +72,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {85126C5C-0573-46DE-9FA1-1664208D73C2}
 	EndGlobalSection
 EndGlobal

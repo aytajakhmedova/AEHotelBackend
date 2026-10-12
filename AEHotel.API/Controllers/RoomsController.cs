@@ -1,5 +1,5 @@
-using AEHotel.App.Rooms;
-using AEHotel.Service.Rooms;
+using AEHotel.Service.DTOs.Rooms;
+using AEHotel.Service.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
@@ -48,6 +48,19 @@ public class RoomsController : ControllerBase
     {
         var updated = await _roomService.UpdateAsync(id, request, cancellationToken);
         return Ok(updated);
+    }
+
+    [HttpGet("{id:int}/quote")]
+    public async Task<ActionResult<RoomQuoteResponse>> Quote(
+        int id,
+        [FromQuery] DateOnly checkIn,
+        [FromQuery] DateOnly checkOut,
+        [FromQuery] int guests = 1,
+        [FromQuery] int? excludeBookingId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var quote = await _roomService.QuoteAsync(id, checkIn, checkOut, guests, excludeBookingId, cancellationToken);
+        return Ok(quote);
     }
 
     [HttpDelete("{id:int}")]

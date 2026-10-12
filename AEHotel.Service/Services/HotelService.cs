@@ -1,32 +1,37 @@
-using AEHotel.App.Hotels;
+using AEHotel.Service.Services.Interfaces;
+using AEHotel.Service.DTOs.Hotels;
 using AEHotel.Domain.Entities;
-using AEHotel.Repository.Hotels;
+using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Service.Exceptions;
-using AEHotel.Service.Mapping;
+using AEHotel.Service.Helpers;
 
-namespace AEHotel.Service.Hotels;
+namespace AEHotel.Service.Services;
 
 public class HotelService : IHotelService
 {
     private readonly IHotelRepository _hotels;
+    private readonly IBookingRepository _bookings;
 
-    public HotelService(IHotelRepository hotels)
+    public HotelService(IHotelRepository hotels, IBookingRepository bookings)
     {
         _hotels = hotels;
+        _bookings = bookings;
     }
 
-    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
     {
         var hotels = await _hotels.GetAllAsync(cancellationToken);
-        return hotels.Select(EntityMapper.MapHotel).ToList();
+        var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
+        return hotels.Select(hotel => EntityMapper.MapHotel(hotel, busyRooms, guests)).ToList();
     }
 
-    public async Task<HotelResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<HotelResponse> GetByIdAsync(int id, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
     {
         var hotel = await _hotels.GetByIdAsync(id, includeRooms: true, tracking: false, cancellationToken)
             ?? throw new NotFoundException($"Hotel with id {id} was not found.");
 
-        return EntityMapper.MapHotel(hotel);
+        var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
+        return EntityMapper.MapHotel(hotel, busyRooms, guests);
     }
 
     public async Task<HotelResponse> CreateAsync(HotelRequest request, CancellationToken cancellationToken = default)
@@ -110,5 +115,18 @@ public class HotelService : IHotelService
         hotel.HotelType = request.HotelType.Trim();
         hotel.CheckInTime = string.IsNullOrWhiteSpace(request.CheckInTime) ? "14:00" : request.CheckInTime.Trim();
         hotel.CheckOutTime = string.IsNullOrWhiteSpace(request.CheckOutTime) ? "12:00" : request.CheckOutTime.Trim();
+        hotel.ImageFile = request.ImageFile.Trim();
+        hotel.AmenitiesJson = JsonLists.WriteStrings(request.Amenities);
+    }
+
+    private async Task<IReadOnlySet<int>?> GetBusyRoomsAsync(DateOnly? checkIn, DateOnly? checkOut, CancellationToken cancellationToken)
+    {
+        if (!checkIn.HasValue || !checkOut.HasValue || checkOut <= checkIn)
+        {
+            return null;
+        }
+
+        var busy = await _bookings.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
+        return busy.ToHashSet();
     }
 }

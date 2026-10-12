@@ -1,6 +1,5 @@
-using AEHotel.Service.Hotels;
-using AEHotel.Service.Reservations;
-using AEHotel.Service.Rooms;
+using AEHotel.Service.Services;
+using AEHotel.Service.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AEHotel.Service;
@@ -12,6 +11,10 @@ public static class DependencyInjection
         services.AddScoped<IHotelService, HotelService>();
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<IFlightService, FlightService>();
+        services.AddScoped<ITourService, TourService>();
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IPaymentService, PaymentService>();
 
         return services;
     }

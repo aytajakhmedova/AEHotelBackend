@@ -1,27 +1,29 @@
-using AEHotel.App.Rooms;
+using AEHotel.Service.Services.Interfaces;
+using AEHotel.Service.DTOs.Rooms;
 using AEHotel.Domain.Entities;
-using AEHotel.Repository.Hotels;
-using AEHotel.Repository.Rooms;
+using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Service.Exceptions;
-using AEHotel.Service.Mapping;
+using AEHotel.Service.Helpers;
 
-namespace AEHotel.Service.Rooms;
+namespace AEHotel.Service.Services;
 
 public class RoomService : IRoomService
 {
     private readonly IRoomRepository _rooms;
     private readonly IHotelRepository _hotels;
+    private readonly IBookingRepository _bookings;
 
-    public RoomService(IRoomRepository rooms, IHotelRepository hotels)
+    public RoomService(IRoomRepository rooms, IHotelRepository hotels, IBookingRepository bookings)
     {
         _rooms = rooms;
         _hotels = hotels;
+        _bookings = bookings;
     }
 
     public async Task<IReadOnlyList<RoomResponse>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var rooms = await _rooms.GetAllAsync(cancellationToken);
-        return rooms.Select(EntityMapper.MapRoom).ToList();
+        return rooms.Select(room => EntityMapper.MapRoom(room)).ToList();
     }
 
     public async Task<IReadOnlyList<RoomResponse>> GetByHotelIdAsync(int hotelId, CancellationToken cancellationToken = default)
@@ -32,7 +34,7 @@ public class RoomService : IRoomService
         }
 
         var rooms = await _rooms.GetByHotelIdAsync(hotelId, cancellationToken);
-        return rooms.Select(EntityMapper.MapRoom).ToList();
+        return rooms.Select(room => EntityMapper.MapRoom(room)).ToList();
     }
 
     public async Task<RoomResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -82,6 +84,59 @@ public class RoomService : IRoomService
         await _rooms.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<RoomQuoteResponse> QuoteAsync(int id, DateOnly checkIn, DateOnly checkOut, int guests, int? excludeBookingId = null, CancellationToken cancellationToken = default)
+    {
+        var room = await _rooms.GetByIdAsync(id, tracking: false, cancellationToken)
+            ?? throw new NotFoundException($"Room with id {id} was not found.");
+
+        if (checkOut <= checkIn)
+        {
+            return Unavailable("Check-out date must be after the check-in date.");
+        }
+
+        if (guests < 1)
+        {
+            return Unavailable("At least one guest is required.");
+        }
+
+        if (guests > room.Capacity)
+        {
+            return Unavailable($"This room allows at most {room.Capacity} guests.");
+        }
+
+        if (!room.Available)
+        {
+            return Unavailable("This room is not available for booking.");
+        }
+
+        if (await _bookings.HasHotelOverlapAsync(room.Id, checkIn, checkOut, excludeBookingId, cancellationToken))
+        {
+            return Unavailable("The room is already reserved for the selected dates.");
+        }
+
+        var price = StayPriceCalculator.Calculate(room.PricePerNight, checkIn, checkOut, guests);
+        return new RoomQuoteResponse
+        {
+            Available = true,
+            Nights = price.Nights,
+            BasePrice = price.BasePrice,
+            ExtraGuestFee = price.ExtraGuestFee,
+            Subtotal = price.Subtotal,
+            TaxRate = StayPriceCalculator.TaxRate,
+            Tax = price.Tax,
+            Total = price.Total
+        };
+    }
+
+    private static RoomQuoteResponse Unavailable(string message)
+    {
+        return new RoomQuoteResponse
+        {
+            Available = false,
+            Message = message
+        };
+    }
+
     private async Task ValidateAsync(RoomRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
@@ -115,5 +170,7 @@ public class RoomService : IRoomService
         room.Size = request.Size.Trim();
         room.PricePerNight = request.PricePerNight;
         room.Available = request.Available;
+        room.ImageFile = request.ImageFile.Trim();
+        room.AmenitiesJson = JsonLists.WriteStrings(request.Amenities);
     }
 }

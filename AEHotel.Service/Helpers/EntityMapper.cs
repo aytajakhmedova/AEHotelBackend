@@ -1,13 +1,13 @@
-using AEHotel.App.Hotels;
-using AEHotel.App.Reservations;
-using AEHotel.App.Rooms;
+using AEHotel.Service.DTOs.Hotels;
+using AEHotel.Service.DTOs.Reservations;
+using AEHotel.Service.DTOs.Rooms;
 using AEHotel.Domain.Entities;
 
-namespace AEHotel.Service.Mapping;
+namespace AEHotel.Service.Helpers;
 
 internal static class EntityMapper
 {
-    public static HotelResponse MapHotel(Hotel hotel)
+    public static HotelResponse MapHotel(Hotel hotel, IReadOnlySet<int>? busyRoomIds = null, int? guests = null)
     {
         return new HotelResponse
         {
@@ -25,11 +25,13 @@ internal static class EntityMapper
             HotelType = hotel.HotelType,
             CheckInTime = hotel.CheckInTime,
             CheckOutTime = hotel.CheckOutTime,
-            Rooms = hotel.Rooms.Select(MapRoom).ToList()
+            ImageFile = hotel.ImageFile,
+            Amenities = JsonLists.ReadStrings(hotel.AmenitiesJson),
+            Rooms = hotel.Rooms.Select(room => MapRoom(room, IsRoomOpen(room, busyRoomIds, guests))).ToList()
         };
     }
 
-    public static RoomResponse MapRoom(Room room)
+    public static RoomResponse MapRoom(Room room, bool? isAvailable = null)
     {
         return new RoomResponse
         {
@@ -41,8 +43,26 @@ internal static class EntityMapper
             BedType = room.BedType,
             Size = room.Size,
             PricePerNight = room.PricePerNight,
-            Available = room.Available
+            Available = room.Available,
+            IsAvailable = isAvailable ?? room.Available,
+            ImageFile = room.ImageFile,
+            Amenities = JsonLists.ReadStrings(room.AmenitiesJson)
         };
+    }
+
+    private static bool IsRoomOpen(Room room, IReadOnlySet<int>? busyRoomIds, int? guests)
+    {
+        if (!room.Available)
+        {
+            return false;
+        }
+
+        if (guests.HasValue && guests.Value > room.Capacity)
+        {
+            return false;
+        }
+
+        return busyRoomIds == null || !busyRoomIds.Contains(room.Id);
     }
 
     public static ReservationResponse MapReservation(Reservation reservation, string? hotelName = null, string? roomName = null)

@@ -1,6 +1,6 @@
-using AEHotel.App.Reservations;
+using AEHotel.Service.DTOs.Reservations;
 
-namespace AEHotel.Service.Reservations;
+namespace AEHotel.Service.Services.Interfaces;
 
 public interface IReservationService
 {

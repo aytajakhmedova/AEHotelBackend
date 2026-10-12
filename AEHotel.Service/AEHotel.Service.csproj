@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AEHotel.Domain\AEHotel.Domain.csproj" />
-    <ProjectReference Include="..\AEHotel.App\AEHotel.App.csproj" />
     <ProjectReference Include="..\AEHotel.Repository\AEHotel.Repository.csproj" />
   </ItemGroup>
 

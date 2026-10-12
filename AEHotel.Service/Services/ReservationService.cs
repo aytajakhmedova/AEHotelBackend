@@ -1,12 +1,11 @@
-using AEHotel.App.Reservations;
+using AEHotel.Service.Services.Interfaces;
+using AEHotel.Service.DTOs.Reservations;
 using AEHotel.Domain.Entities;
-using AEHotel.Repository.Hotels;
-using AEHotel.Repository.Reservations;
-using AEHotel.Repository.Rooms;
+using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Service.Exceptions;
-using AEHotel.Service.Mapping;
+using AEHotel.Service.Helpers;
 
-namespace AEHotel.Service.Reservations;
+namespace AEHotel.Service.Services;
 
 public class ReservationService : IReservationService
 {

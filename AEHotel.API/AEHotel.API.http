@@ -1,0 +1,82 @@
+@AEHotel.API_HostAddress = http://localhost:5080
+
+GET {{AEHotel.API_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+GET {{AEHotel.API_HostAddress}}/api/hotels
+Accept: application/json
+
+###
+
+GET {{AEHotel.API_HostAddress}}/api/hotels/1
+Accept: application/json
+
+###
+
+POST {{AEHotel.API_HostAddress}}/api/hotels
+Content-Type: application/json
+
+{
+  "title": "Paradise Beach Hotel",
+  "city": "Antalya",
+  "country": "Turkiye",
+  "location": "Lara",
+  "address": "Lara Caddesi 10",
+  "stars": 5,
+  "description": "Sea view resort",
+  "pricePerNight": 350,
+  "hotelType": "Resort",
+  "checkInTime": "14:00",
+  "checkOutTime": "12:00"
+}
+
+###
+
+PUT {{AEHotel.API_HostAddress}}/api/hotels/1
+Content-Type: application/json
+
+{
+  "title": "Cendu Corinthia",
+  "city": "Cendu",
+  "country": "Cin",
+  "location": "Gui Xi",
+  "address": "No. 88, Jinrong Avenue",
+  "stars": 5,
+  "description": "Updated description",
+  "pricePerNight": 450,
+  "hotelType": "Luxury",
+  "checkInTime": "14:00",
+  "checkOutTime": "12:00"
+}
+
+###
+
+GET {{AEHotel.API_HostAddress}}/api/rooms
+Accept: application/json
+
+###
+
+GET {{AEHotel.API_HostAddress}}/api/hotels/1/rooms
+Accept: application/json
+
+###
+
+POST {{AEHotel.API_HostAddress}}/api/reservations
+Content-Type: application/json
+
+{
+  "hotelId": 1,
+  "roomId": 1,
+  "guestName": "Aytac Ahmedova",
+  "guestEmail": "guest@example.com",
+  "checkIn": "2026-11-10",
+  "checkOut": "2026-11-14",
+  "guests": 2,
+  "status": "confirmed"
+}
+
+###
+
+DELETE {{AEHotel.API_HostAddress}}/api/reservations/1

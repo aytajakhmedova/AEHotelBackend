@@ -9,10 +9,12 @@ namespace AEHotel.Service.Services;
 public class FlightService : IFlightService
 {
     private readonly IFlightRepository _flights;
+    private readonly IBookingRepository _bookings;
 
-    public FlightService(IFlightRepository flights)
+    public FlightService(IFlightRepository flights, IBookingRepository bookings)
     {
         _flights = flights;
+        _bookings = bookings;
     }
 
     public async Task<IReadOnlyList<FlightResponse>> GetAllAsync(string? origin, string? destination, DateOnly? date, string? cabin, CancellationToken cancellationToken = default)
@@ -55,6 +57,12 @@ public class FlightService : IFlightService
     {
         var flight = await _flights.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Flight with id {id} was not found.");
+
+        if (await _bookings.ExistsForFlightAsync(id, cancellationToken))
+        {
+            throw new ValidationException("This flight cannot be deleted because it has reservations.");
+        }
+
         _flights.Remove(flight);
         await _flights.SaveChangesAsync(cancellationToken);
     }

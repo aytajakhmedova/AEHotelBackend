@@ -11,11 +11,13 @@ public class HotelService : IHotelService
 {
     private readonly IHotelRepository _hotels;
     private readonly IBookingRepository _bookings;
+    private readonly IReservationRepository _reservations;
 
-    public HotelService(IHotelRepository hotels, IBookingRepository bookings)
+    public HotelService(IHotelRepository hotels, IBookingRepository bookings, IReservationRepository reservations)
     {
         _hotels = hotels;
         _bookings = bookings;
+        _reservations = reservations;
     }
 
     public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
@@ -65,7 +67,8 @@ public class HotelService : IHotelService
         var hotel = await _hotels.GetByIdAsync(id, includeRooms: false, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Hotel with id {id} was not found.");
 
-        if (await _hotels.HasReservationsAsync(id, cancellationToken))
+        if (await _hotels.HasReservationsAsync(id, cancellationToken) ||
+            await _bookings.ExistsForHotelAsync(id, cancellationToken))
         {
             throw new ValidationException("This hotel cannot be deleted because it has reservations.");
         }
@@ -126,7 +129,8 @@ public class HotelService : IHotelService
             return null;
         }
 
-        var busy = await _bookings.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
-        return busy.ToHashSet();
+        var busyBookings = await _bookings.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
+        var busyReservations = await _reservations.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
+        return busyBookings.Concat(busyReservations).ToHashSet();
     }
 }

@@ -10,10 +10,12 @@ namespace AEHotel.Service.Services;
 public class TourService : ITourService
 {
     private readonly ITourRepository _tours;
+    private readonly IBookingRepository _bookings;
 
-    public TourService(ITourRepository tours)
+    public TourService(ITourRepository tours, IBookingRepository bookings)
     {
         _tours = tours;
+        _bookings = bookings;
     }
 
     public async Task<IReadOnlyList<TourResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -53,6 +55,12 @@ public class TourService : ITourService
     {
         var tour = await _tours.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Tour with id {id} was not found.");
+
+        if (await _bookings.ExistsForTourAsync(id, cancellationToken))
+        {
+            throw new ValidationException("This tour cannot be deleted because it has reservations.");
+        }
+
         _tours.Remove(tour);
         await _tours.SaveChangesAsync(cancellationToken);
     }

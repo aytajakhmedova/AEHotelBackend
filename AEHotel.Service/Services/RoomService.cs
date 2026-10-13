@@ -12,12 +12,14 @@ public class RoomService : IRoomService
     private readonly IRoomRepository _rooms;
     private readonly IHotelRepository _hotels;
     private readonly IBookingRepository _bookings;
+    private readonly IReservationRepository _reservations;
 
-    public RoomService(IRoomRepository rooms, IHotelRepository hotels, IBookingRepository bookings)
+    public RoomService(IRoomRepository rooms, IHotelRepository hotels, IBookingRepository bookings, IReservationRepository reservations)
     {
         _rooms = rooms;
         _hotels = hotels;
         _bookings = bookings;
+        _reservations = reservations;
     }
 
     public async Task<IReadOnlyList<RoomResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -54,7 +56,7 @@ public class RoomService : IRoomService
         await _rooms.AddAsync(room, cancellationToken);
         await _rooms.SaveChangesAsync(cancellationToken);
 
-        return EntityMapper.MapRoom(room);
+        return await GetByIdAsync(room.Id, cancellationToken);
     }
 
     public async Task<RoomResponse> UpdateAsync(int id, RoomRequest request, CancellationToken cancellationToken = default)
@@ -67,7 +69,7 @@ public class RoomService : IRoomService
         Apply(room, request);
         await _rooms.SaveChangesAsync(cancellationToken);
 
-        return EntityMapper.MapRoom(room);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -75,7 +77,8 @@ public class RoomService : IRoomService
         var room = await _rooms.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Room with id {id} was not found.");
 
-        if (await _rooms.HasReservationsAsync(id, cancellationToken))
+        if (await _rooms.HasReservationsAsync(id, cancellationToken) ||
+            await _bookings.ExistsForRoomAsync(id, cancellationToken))
         {
             throw new ValidationException("This room cannot be deleted because it has reservations.");
         }
@@ -109,7 +112,8 @@ public class RoomService : IRoomService
             return Unavailable("This room is not available for booking.");
         }
 
-        if (await _bookings.HasHotelOverlapAsync(room.Id, checkIn, checkOut, excludeBookingId, cancellationToken))
+        if (await _bookings.HasHotelOverlapAsync(room.Id, checkIn, checkOut, excludeBookingId, cancellationToken) ||
+            await _reservations.HasOverlapAsync(room.Id, checkIn, checkOut, excludeReservationId: null, cancellationToken))
         {
             return Unavailable("The room is already reserved for the selected dates.");
         }
@@ -139,6 +143,11 @@ public class RoomService : IRoomService
 
     private async Task ValidateAsync(RoomRequest request, CancellationToken cancellationToken)
     {
+        if (request.HotelId < 1)
+        {
+            throw new ValidationException("Hotel is required.");
+        }
+
         if (string.IsNullOrWhiteSpace(request.Name))
         {
             throw new ValidationException("Room name is required.");

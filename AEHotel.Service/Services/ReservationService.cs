@@ -21,15 +21,18 @@ public class ReservationService : IReservationService
     private readonly IReservationRepository _reservations;
     private readonly IHotelRepository _hotels;
     private readonly IRoomRepository _rooms;
+    private readonly IBookingRepository _bookings;
 
     public ReservationService(
         IReservationRepository reservations,
         IHotelRepository hotels,
-        IRoomRepository rooms)
+        IRoomRepository rooms,
+        IBookingRepository bookings)
     {
         _reservations = reservations;
         _hotels = hotels;
         _rooms = rooms;
+        _bookings = bookings;
     }
 
     public async Task<IReadOnlyList<ReservationResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -135,7 +138,8 @@ public class ReservationService : IReservationService
         }
 
         if (!string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase) &&
-            await _reservations.HasOverlapAsync(room.Id, request.CheckIn, request.CheckOut, excludeReservationId, cancellationToken))
+            (await _reservations.HasOverlapAsync(room.Id, request.CheckIn, request.CheckOut, excludeReservationId, cancellationToken) ||
+             await _bookings.HasHotelOverlapAsync(room.Id, request.CheckIn, request.CheckOut, excludeBookingId: null, cancellationToken)))
         {
             throw new ValidationException("The room is already reserved for the selected dates.");
         }

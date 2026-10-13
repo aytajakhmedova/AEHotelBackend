@@ -23,10 +23,38 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
         return Query(tracking).FirstOrDefaultAsync(booking => booking.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Booking>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        return await Query(tracking: false)
+            .Where(booking => booking.UserId == userId)
+            .OrderByDescending(booking => booking.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> HasHotelOverlapAsync(int roomId, DateOnly checkIn, DateOnly checkOut, int? excludeBookingId, CancellationToken cancellationToken = default)
     {
         return ActiveHotelStays(checkIn, checkOut, excludeBookingId)
             .AnyAsync(booking => booking.RoomId == roomId, cancellationToken);
+    }
+
+    public Task<bool> ExistsForRoomAsync(int roomId, CancellationToken cancellationToken = default)
+    {
+        return Context.Bookings.AnyAsync(booking => booking.RoomId == roomId, cancellationToken);
+    }
+
+    public Task<bool> ExistsForHotelAsync(int hotelId, CancellationToken cancellationToken = default)
+    {
+        return Context.Bookings.AnyAsync(booking => booking.HotelId == hotelId, cancellationToken);
+    }
+
+    public Task<bool> ExistsForFlightAsync(int flightId, CancellationToken cancellationToken = default)
+    {
+        return Context.Bookings.AnyAsync(booking => booking.FlightId == flightId, cancellationToken);
+    }
+
+    public Task<bool> ExistsForTourAsync(int tourId, CancellationToken cancellationToken = default)
+    {
+        return Context.Bookings.AnyAsync(booking => booking.TourId == tourId, cancellationToken);
     }
 
     public async Task<List<int>> GetBusyRoomIdsAsync(DateOnly checkIn, DateOnly checkOut, CancellationToken cancellationToken = default)

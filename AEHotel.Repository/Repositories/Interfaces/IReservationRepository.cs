@@ -15,6 +15,8 @@ public interface IReservationRepository
         int? excludeReservationId,
         CancellationToken cancellationToken = default);
 
+    Task<List<int>> GetBusyRoomIdsAsync(DateOnly checkIn, DateOnly checkOut, CancellationToken cancellationToken = default);
+
     Task AddAsync(Reservation reservation, CancellationToken cancellationToken = default);
 
     void Remove(Reservation reservation);

@@ -55,4 +55,16 @@ public class ReservationRepository : BaseRepository<Reservation>, IReservationRe
             checkIn < reservation.CheckOut,
             cancellationToken);
     }
+
+    public async Task<List<int>> GetBusyRoomIdsAsync(DateOnly checkIn, DateOnly checkOut, CancellationToken cancellationToken = default)
+    {
+        return await Context.Reservations
+            .Where(reservation =>
+                reservation.Status != "cancelled" &&
+                reservation.CheckIn < checkOut &&
+                checkIn < reservation.CheckOut)
+            .Select(reservation => reservation.RoomId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
 }

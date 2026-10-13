@@ -37,6 +37,7 @@ internal static class EntityMapper
         {
             Id = room.Id,
             HotelId = room.HotelId,
+            HotelName = room.Hotel?.Title ?? string.Empty,
             Name = room.Name,
             Description = room.Description,
             Capacity = room.Capacity,

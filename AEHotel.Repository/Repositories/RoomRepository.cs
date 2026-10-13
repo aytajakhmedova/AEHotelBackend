@@ -15,6 +15,7 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
     {
         return await Context.Rooms
             .AsNoTracking()
+            .Include(room => room.Hotel)
             .OrderBy(room => room.Id)
             .ToListAsync(cancellationToken);
     }
@@ -23,6 +24,7 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
     {
         return await Context.Rooms
             .AsNoTracking()
+            .Include(room => room.Hotel)
             .Where(room => room.HotelId == hotelId)
             .OrderBy(room => room.Id)
             .ToListAsync(cancellationToken);
@@ -30,7 +32,7 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
 
     public Task<Room?> GetByIdAsync(int id, bool tracking, CancellationToken cancellationToken = default)
     {
-        IQueryable<Room> query = Context.Rooms;
+        IQueryable<Room> query = Context.Rooms.Include(room => room.Hotel);
 
         if (!tracking)
         {

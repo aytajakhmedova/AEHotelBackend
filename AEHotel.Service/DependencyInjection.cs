@@ -15,6 +15,8 @@ public static class DependencyInjection
         services.AddScoped<ITourService, TourService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }

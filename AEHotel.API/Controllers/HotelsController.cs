@@ -1,5 +1,7 @@
 using AEHotel.Service.DTOs.Hotels;
+using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
@@ -39,6 +41,7 @@ public class HotelsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<ActionResult<HotelResponse>> Create(HotelRequest request, CancellationToken cancellationToken)
     {
         var created = await _hotelService.CreateAsync(request, cancellationToken);
@@ -46,6 +49,7 @@ public class HotelsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<ActionResult<HotelResponse>> Update(int id, HotelRequest request, CancellationToken cancellationToken)
     {
         var updated = await _hotelService.UpdateAsync(id, request, cancellationToken);
@@ -53,6 +57,7 @@ public class HotelsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _hotelService.DeleteAsync(id, cancellationToken);

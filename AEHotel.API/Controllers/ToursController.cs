@@ -1,5 +1,7 @@
 using AEHotel.Service.DTOs.Tours;
+using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
@@ -28,6 +30,7 @@ public class ToursController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<ActionResult<TourResponse>> Create(TourRequest request, CancellationToken cancellationToken)
     {
         var created = await _tourService.CreateAsync(request, cancellationToken);
@@ -35,12 +38,14 @@ public class ToursController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<ActionResult<TourResponse>> Update(int id, TourRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _tourService.UpdateAsync(id, request, cancellationToken));
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _tourService.DeleteAsync(id, cancellationToken);

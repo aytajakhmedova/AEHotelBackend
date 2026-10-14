@@ -1,5 +1,7 @@
 using AEHotel.Service.DTOs.Rooms;
+using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
@@ -37,6 +39,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<ActionResult<RoomResponse>> Create(RoomRequest request, CancellationToken cancellationToken)
     {
         var created = await _roomService.CreateAsync(request, cancellationToken);
@@ -44,6 +47,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<ActionResult<RoomResponse>> Update(int id, RoomRequest request, CancellationToken cancellationToken)
     {
         var updated = await _roomService.UpdateAsync(id, request, cancellationToken);
@@ -64,6 +68,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _roomService.DeleteAsync(id, cancellationToken);

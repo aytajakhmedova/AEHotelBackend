@@ -1,10 +1,13 @@
 using AEHotel.Service.DTOs.Payments;
+using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = AppRoles.Admin)]
 [Route("api/payments")]
 public class PaymentsController : ControllerBase
 {

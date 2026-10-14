@@ -1,10 +1,13 @@
 using AEHotel.Service.DTOs.Reservations;
+using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AEHotel.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = AppRoles.Admin)]
 [Route("api/reservations")]
 public class ReservationsController : ControllerBase
 {

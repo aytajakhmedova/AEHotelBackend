@@ -20,6 +20,7 @@ public class BookingService : IBookingService
     private readonly IBookingRepository _bookings;
     private readonly IHotelRepository _hotels;
     private readonly IRoomRepository _rooms;
+    private readonly IReservationRepository _reservations;
     private readonly IFlightRepository _flights;
     private readonly ITourRepository _tours;
 
@@ -27,12 +28,14 @@ public class BookingService : IBookingService
         IBookingRepository bookings,
         IHotelRepository hotels,
         IRoomRepository rooms,
+        IReservationRepository reservations,
         IFlightRepository flights,
         ITourRepository tours)
     {
         _bookings = bookings;
         _hotels = hotels;
         _rooms = rooms;
+        _reservations = reservations;
         _flights = flights;
         _tours = tours;
     }
@@ -43,15 +46,27 @@ public class BookingService : IBookingService
         return bookings.Select(Map).ToList();
     }
 
-    public async Task<BookingResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<BookingResponse>> GetMineAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var bookings = await _bookings.GetByUserIdAsync(userId, cancellationToken);
+        return bookings.Select(Map).ToList();
+    }
+
+    public async Task<BookingResponse> GetByIdAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default)
     {
         var booking = await _bookings.GetByIdAsync(id, tracking: false, cancellationToken)
             ?? throw new NotFoundException($"Booking with id {id} was not found.");
+        EnsureCanAccess(booking, userId, isAdmin);
         return Map(booking);
     }
 
-    public async Task<BookingResponse> CreateAsync(BookingRequest request, CancellationToken cancellationToken = default)
+    public async Task<BookingResponse> CreateAsync(BookingRequest request, string userId, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedException("Authentication is required.");
+        }
+
         ValidateGuest(request);
         var bookingType = NormalizeType(request.BookingType);
         var booking = new Booking
@@ -59,6 +74,7 @@ public class BookingService : IBookingService
             Code = CreateCode(),
             BookingType = bookingType,
             Status = "confirmed",
+            UserId = userId,
             GuestName = request.GuestName.Trim(),
             GuestEmail = request.GuestEmail.Trim(),
             GuestPhone = request.GuestPhone?.Trim() ?? string.Empty,
@@ -88,10 +104,11 @@ public class BookingService : IBookingService
         return Map(saved!);
     }
 
-    public async Task<BookingResponse> UpdateAsync(int id, BookingUpdateRequest request, CancellationToken cancellationToken = default)
+    public async Task<BookingResponse> UpdateAsync(int id, BookingUpdateRequest request, string userId, bool isAdmin, CancellationToken cancellationToken = default)
     {
         var booking = await _bookings.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Booking with id {id} was not found.");
+        EnsureCanAccess(booking, userId, isAdmin);
 
         if (!string.Equals(booking.Status, "confirmed", StringComparison.OrdinalIgnoreCase))
         {
@@ -131,10 +148,11 @@ public class BookingService : IBookingService
         return Map(saved!);
     }
 
-    public async Task<BookingResponse> UpdateStatusAsync(int id, string status, CancellationToken cancellationToken = default)
+    public async Task<BookingResponse> UpdateStatusAsync(int id, string status, string userId, bool isAdmin, CancellationToken cancellationToken = default)
     {
         var booking = await _bookings.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Booking with id {id} was not found.");
+        EnsureCanAccess(booking, userId, isAdmin);
 
         var next = status.Trim().ToLowerInvariant();
         if (!NextStatuses.TryGetValue(booking.Status, out var allowed) || !allowed.Contains(next, StringComparer.OrdinalIgnoreCase))
@@ -161,9 +179,22 @@ public class BookingService : IBookingService
         return Map(saved!);
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default)
     {
-        await UpdateStatusAsync(id, "cancelled", cancellationToken);
+        await UpdateStatusAsync(id, "cancelled", userId, isAdmin, cancellationToken);
+    }
+
+    private static void EnsureCanAccess(Booking booking, string userId, bool isAdmin)
+    {
+        if (isAdmin)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(userId) || booking.UserId != userId)
+        {
+            throw new NotFoundException($"Booking with id {booking.Id} was not found.");
+        }
     }
 
     private async Task ApplyHotelAsync(Booking booking, BookingRequest request, int? excludeBookingId, CancellationToken cancellationToken)
@@ -206,7 +237,8 @@ public class BookingService : IBookingService
             throw new ValidationException("This room is not available for booking.");
         }
 
-        if (await _bookings.HasHotelOverlapAsync(room.Id, request.CheckIn.Value, request.CheckOut.Value, excludeBookingId, cancellationToken))
+        if (await _bookings.HasHotelOverlapAsync(room.Id, request.CheckIn.Value, request.CheckOut.Value, excludeBookingId, cancellationToken) ||
+            await _reservations.HasOverlapAsync(room.Id, request.CheckIn.Value, request.CheckOut.Value, excludeReservationId: null, cancellationToken))
         {
             throw new ValidationException("The room is already reserved for the selected dates.");
         }
@@ -302,17 +334,35 @@ public class BookingService : IBookingService
 
     private static Payment CreatePayment(BookingRequest request, decimal amount)
     {
-        var method = string.Equals(request.PaymentMethod, "hotel", StringComparison.OrdinalIgnoreCase) ? "hotel" : "card";
-        var digits = new string((request.CardNumber ?? string.Empty).Where(char.IsDigit).ToArray());
+        var method = NormalizePaymentMethod(request.PaymentMethod);
+        var isCard = method == "card";
+        var digits = isCard
+            ? new string((request.CardNumber ?? string.Empty).Where(char.IsDigit).ToArray())
+            : string.Empty;
+
         return new Payment
         {
             Method = method,
             Amount = amount,
-            Status = method == "card" ? "paid" : "pending",
+            Status = "pending",
             CardLast4 = digits.Length >= 4 ? digits[^4..] : string.Empty,
-            CardHolder = request.CardHolder?.Trim() ?? string.Empty,
+            CardHolder = isCard ? request.CardHolder?.Trim() ?? string.Empty : string.Empty,
             CreatedAt = DateTime.UtcNow
         };
+    }
+
+    private static string NormalizePaymentMethod(string? paymentMethod)
+    {
+        var method = string.IsNullOrWhiteSpace(paymentMethod)
+            ? "card"
+            : paymentMethod.Trim().ToLowerInvariant();
+
+        if (method is not ("card" or "cash" or "hotel"))
+        {
+            throw new ValidationException("Payment method must be card or cash.");
+        }
+
+        return method;
     }
 
     private static void ValidateGuest(BookingRequest request)

@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local SMTP pickup emails
+App_Data/email-pickup/
+
 # User-specific files
 *.rsuser
 *.suo

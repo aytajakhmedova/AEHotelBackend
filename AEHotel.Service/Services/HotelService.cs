@@ -20,11 +20,21 @@ public class HotelService : IHotelService
         _reservations = reservations;
     }
 
-    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
     {
         var hotels = await _hotels.GetAllAsync(cancellationToken);
         var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
-        return hotels.Select(hotel => EntityMapper.MapHotel(hotel, busyRooms, guests)).ToList();
+        var results = hotels
+            .Where(hotel => MatchesCity(hotel, city))
+            .Select(hotel => EntityMapper.MapHotel(hotel, busyRooms, guests))
+            .ToList();
+
+        if (guests.HasValue || (checkIn.HasValue && checkOut.HasValue))
+        {
+            results = results.Where(hotel => hotel.Rooms.Any(room => room.IsAvailable)).ToList();
+        }
+
+        return results;
     }
 
     public async Task<HotelResponse> GetByIdAsync(int id, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
@@ -75,6 +85,20 @@ public class HotelService : IHotelService
 
         _hotels.Remove(hotel);
         await _hotels.SaveChangesAsync(cancellationToken);
+    }
+
+    private static bool MatchesCity(Hotel hotel, string? city)
+    {
+        if (string.IsNullOrWhiteSpace(city))
+        {
+            return true;
+        }
+
+        var value = city.Trim();
+        return hotel.City.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+               hotel.Country.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+               hotel.Location.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+               hotel.Title.Contains(value, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void Validate(HotelRequest request)

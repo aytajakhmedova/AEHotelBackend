@@ -19,12 +19,13 @@ public class HotelsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<HotelResponse>>> GetAll(
+        [FromQuery] string? city,
         [FromQuery] DateOnly? checkIn,
         [FromQuery] DateOnly? checkOut,
         [FromQuery] int? guests,
         CancellationToken cancellationToken)
     {
-        var hotels = await _hotelService.GetAllAsync(checkIn, checkOut, guests, cancellationToken);
+        var hotels = await _hotelService.GetAllAsync(city, checkIn, checkOut, guests, cancellationToken);
         return Ok(hotels);
     }
 

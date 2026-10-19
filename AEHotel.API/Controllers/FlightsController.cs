@@ -22,10 +22,12 @@ public class FlightsController : ControllerBase
         [FromQuery] string? origin,
         [FromQuery] string? destination,
         [FromQuery] DateOnly? date,
+        [FromQuery] int? passengers,
         [FromQuery] string? cabin,
+        [FromQuery] string? sort,
         CancellationToken cancellationToken)
     {
-        var flights = await _flightService.GetAllAsync(origin, destination, date, cabin, cancellationToken);
+        var flights = await _flightService.GetAllAsync(origin, destination, date, passengers, cabin, sort, cancellationToken);
         return Ok(flights);
     }
 

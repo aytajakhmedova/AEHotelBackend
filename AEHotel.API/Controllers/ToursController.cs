@@ -18,9 +18,13 @@ public class ToursController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<TourResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<TourResponse>>> GetAll(
+        [FromQuery] string? destination,
+        [FromQuery] DateOnly? date,
+        [FromQuery] int? guests,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _tourService.GetAllAsync(cancellationToken));
+        return Ok(await _tourService.GetAllAsync(destination, date, guests, cancellationToken));
     }
 
     [HttpGet("{id:int}")]

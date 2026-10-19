@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AEHotel.Service.DTOs.Tours;
 
 public class TourDayResponse
@@ -49,4 +51,7 @@ public class TourRequest
 public class TourResponse : TourRequest
 {
     public int Id { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? RemainingPlaces { get; set; }
 }

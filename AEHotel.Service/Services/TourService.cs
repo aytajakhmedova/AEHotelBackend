@@ -18,10 +18,33 @@ public class TourService : ITourService
         _bookings = bookings;
     }
 
-    public async Task<IReadOnlyList<TourResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default)
     {
         var tours = await _tours.GetAllAsync(cancellationToken);
-        return tours.Select(Map).ToList();
+        var results = new List<TourResponse>();
+
+        foreach (var tour in tours)
+        {
+            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests) || !MatchesDate(tour, date))
+            {
+                continue;
+            }
+
+            var mapped = Map(tour);
+            if (date.HasValue)
+            {
+                var reserved = await _bookings.CountTourGuestsAsync(tour.Id, date.Value, excludeBookingId: null, cancellationToken);
+                mapped.RemainingPlaces = Math.Max(0, tour.MaxGuests - reserved);
+                if (guests.HasValue && mapped.RemainingPlaces < guests.Value)
+                {
+                    continue;
+                }
+            }
+
+            results.Add(mapped);
+        }
+
+        return results;
     }
 
     public async Task<TourResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -63,6 +86,34 @@ public class TourService : ITourService
 
         _tours.Remove(tour);
         await _tours.SaveChangesAsync(cancellationToken);
+    }
+
+    private static bool MatchesDestination(Tour tour, string? destination)
+    {
+        if (string.IsNullOrWhiteSpace(destination))
+        {
+            return true;
+        }
+
+        var value = destination.Trim();
+        return tour.Destination.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+               tour.Name.Contains(value, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool MatchesGuests(Tour tour, int? guests)
+    {
+        return !guests.HasValue || (guests.Value >= tour.MinGuests && guests.Value <= tour.MaxGuests);
+    }
+
+    private static bool MatchesDate(Tour tour, DateOnly? date)
+    {
+        if (!date.HasValue)
+        {
+            return true;
+        }
+
+        var dates = JsonLists.ReadStrings(tour.AvailableDatesJson);
+        return dates.Count == 0 || dates.Contains(date.Value.ToString("yyyy-MM-dd"));
     }
 
     private static void Validate(TourRequest request)

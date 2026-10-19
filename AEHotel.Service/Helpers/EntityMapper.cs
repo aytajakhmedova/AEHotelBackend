@@ -1,5 +1,4 @@
 using AEHotel.Service.DTOs.Hotels;
-using AEHotel.Service.DTOs.Reservations;
 using AEHotel.Service.DTOs.Rooms;
 using AEHotel.Domain.Entities;
 
@@ -51,7 +50,7 @@ internal static class EntityMapper
         };
     }
 
-    private static bool IsRoomOpen(Room room, IReadOnlySet<int>? busyRoomIds, int? guests)
+    internal static bool IsRoomOpen(Room room, IReadOnlySet<int>? busyRoomIds, int? guests)
     {
         if (!room.Available)
         {
@@ -64,30 +63,5 @@ internal static class EntityMapper
         }
 
         return busyRoomIds == null || !busyRoomIds.Contains(room.Id);
-    }
-
-    public static ReservationResponse MapReservation(Reservation reservation, string? hotelName = null, string? roomName = null)
-    {
-        var nights = reservation.CheckOut.DayNumber - reservation.CheckIn.DayNumber;
-
-        return new ReservationResponse
-        {
-            Id = reservation.Id,
-            Code = reservation.Code,
-            Status = reservation.Status,
-            HotelId = reservation.HotelId,
-            HotelName = hotelName ?? reservation.Hotel?.Title ?? string.Empty,
-            RoomId = reservation.RoomId,
-            RoomName = roomName ?? reservation.Room?.Name ?? string.Empty,
-            GuestName = reservation.GuestName,
-            GuestEmail = reservation.GuestEmail,
-            CheckIn = reservation.CheckIn,
-            CheckOut = reservation.CheckOut,
-            Guests = reservation.Guests,
-            Nights = nights < 0 ? 0 : nights,
-            PricePerNight = reservation.PricePerNight,
-            TotalPrice = reservation.TotalPrice,
-            CreatedAt = reservation.CreatedAt
-        };
     }
 }

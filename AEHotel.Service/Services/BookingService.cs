@@ -23,6 +23,7 @@ public class BookingService : IBookingService
     private readonly IReservationRepository _reservations;
     private readonly IFlightRepository _flights;
     private readonly ITourRepository _tours;
+    private readonly ITripSuggestionService _suggestions;
 
     public BookingService(
         IBookingRepository bookings,
@@ -30,7 +31,8 @@ public class BookingService : IBookingService
         IRoomRepository rooms,
         IReservationRepository reservations,
         IFlightRepository flights,
-        ITourRepository tours)
+        ITourRepository tours,
+        ITripSuggestionService suggestions)
     {
         _bookings = bookings;
         _hotels = hotels;
@@ -38,6 +40,7 @@ public class BookingService : IBookingService
         _reservations = reservations;
         _flights = flights;
         _tours = tours;
+        _suggestions = suggestions;
     }
 
     public async Task<IReadOnlyList<BookingResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -46,9 +49,15 @@ public class BookingService : IBookingService
         return bookings.Select(Map).ToList();
     }
 
-    public async Task<IReadOnlyList<BookingResponse>> GetMineAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<BookingResponse>> GetMineAsync(string userId, string? bookingType = null, CancellationToken cancellationToken = default)
     {
         var bookings = await _bookings.GetByUserIdAsync(userId, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(bookingType))
+        {
+            var type = bookingType.Trim().ToLowerInvariant();
+            bookings = bookings.Where(booking => booking.BookingType == type).ToList();
+        }
+
         return bookings.Select(Map).ToList();
     }
 
@@ -57,7 +66,7 @@ public class BookingService : IBookingService
         var booking = await _bookings.GetByIdAsync(id, tracking: false, cancellationToken)
             ?? throw new NotFoundException($"Booking with id {id} was not found.");
         EnsureCanAccess(booking, userId, isAdmin);
-        return Map(booking);
+        return await MapWithSuggestionsAsync(booking, cancellationToken);
     }
 
     public async Task<BookingResponse> CreateAsync(BookingRequest request, string userId, CancellationToken cancellationToken = default)
@@ -101,7 +110,7 @@ public class BookingService : IBookingService
         await _bookings.SaveChangesAsync(cancellationToken);
 
         var saved = await _bookings.GetByIdAsync(booking.Id, tracking: false, cancellationToken);
-        return Map(saved!);
+        return await MapWithSuggestionsAsync(saved!, cancellationToken);
     }
 
     public async Task<BookingResponse> UpdateAsync(int id, BookingUpdateRequest request, string userId, bool isAdmin, CancellationToken cancellationToken = default)
@@ -397,6 +406,23 @@ public class BookingService : IBookingService
     private static string CreateCode()
     {
         return $"OB-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
+    }
+
+    private async Task<BookingResponse> MapWithSuggestionsAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        var response = Map(booking);
+        if (booking.BookingType != "hotel")
+        {
+            return response;
+        }
+
+        response.TripSuggestions = await _suggestions.GetAsync(
+            booking.Hotel?.City ?? booking.Location,
+            booking.CheckIn,
+            booking.CheckOut,
+            booking.Guests,
+            cancellationToken);
+        return response;
     }
 
     private static BookingResponse Map(Booking booking)

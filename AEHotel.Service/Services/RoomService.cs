@@ -28,7 +28,7 @@ public class RoomService : IRoomService
         return rooms.Select(room => EntityMapper.MapRoom(room)).ToList();
     }
 
-    public async Task<IReadOnlyList<RoomResponse>> GetByHotelIdAsync(int hotelId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RoomResponse>> GetByHotelIdAsync(int hotelId, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
     {
         if (!await _hotels.ExistsAsync(hotelId, cancellationToken))
         {
@@ -36,7 +36,8 @@ public class RoomService : IRoomService
         }
 
         var rooms = await _rooms.GetByHotelIdAsync(hotelId, cancellationToken);
-        return rooms.Select(room => EntityMapper.MapRoom(room)).ToList();
+        var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
+        return rooms.Select(room => EntityMapper.MapRoom(room, EntityMapper.IsRoomOpen(room, busyRooms, guests))).ToList();
     }
 
     public async Task<RoomResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -130,6 +131,18 @@ public class RoomService : IRoomService
             Tax = price.Tax,
             Total = price.Total
         };
+    }
+
+    private async Task<IReadOnlySet<int>?> GetBusyRoomsAsync(DateOnly? checkIn, DateOnly? checkOut, CancellationToken cancellationToken)
+    {
+        if (!checkIn.HasValue || !checkOut.HasValue || checkOut <= checkIn)
+        {
+            return null;
+        }
+
+        var busyBookings = await _bookings.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
+        var busyReservations = await _reservations.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
+        return busyBookings.Concat(busyReservations).ToHashSet();
     }
 
     private static RoomQuoteResponse Unavailable(string message)

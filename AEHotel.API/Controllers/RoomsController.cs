@@ -25,9 +25,14 @@ public class RoomsController : ControllerBase
     }
 
     [HttpGet("/api/hotels/{hotelId:int}/rooms")]
-    public async Task<ActionResult<IReadOnlyList<RoomResponse>>> GetByHotel(int hotelId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<RoomResponse>>> GetByHotel(
+        int hotelId,
+        [FromQuery] DateOnly? checkIn,
+        [FromQuery] DateOnly? checkOut,
+        [FromQuery] int? guests,
+        CancellationToken cancellationToken)
     {
-        var rooms = await _roomService.GetByHotelIdAsync(hotelId, cancellationToken);
+        var rooms = await _roomService.GetByHotelIdAsync(hotelId, checkIn, checkOut, guests, cancellationToken);
         return Ok(rooms);
     }
 

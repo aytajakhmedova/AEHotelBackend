@@ -6,7 +6,7 @@ public interface IRoomService
 {
     Task<IReadOnlyList<RoomResponse>> GetAllAsync(CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<RoomResponse>> GetByHotelIdAsync(int hotelId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RoomResponse>> GetByHotelIdAsync(int hotelId, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default);
 
     Task<RoomResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 

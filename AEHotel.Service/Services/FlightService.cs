@@ -17,13 +17,14 @@ public class FlightService : IFlightService
         _bookings = bookings;
     }
 
-    public async Task<IReadOnlyList<FlightResponse>> GetAllAsync(string? origin, string? destination, DateOnly? date, string? cabin, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<FlightResponse>> GetAllAsync(string? origin, string? destination, DateOnly? date, int? passengers, string? cabin, string? sort, CancellationToken cancellationToken = default)
     {
         var flights = await _flights.GetAllAsync(cancellationToken);
-        return flights
-            .Where(flight => Matches(flight, origin, destination, date, cabin))
-            .Select(Map)
-            .ToList();
+        var matches = flights
+            .Where(flight => Matches(flight, origin, destination, date, passengers, cabin))
+            .Select(Map);
+
+        return Sort(matches, sort).ToList();
     }
 
     public async Task<FlightResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -67,7 +68,7 @@ public class FlightService : IFlightService
         await _flights.SaveChangesAsync(cancellationToken);
     }
 
-    private static bool Matches(Flight flight, string? origin, string? destination, DateOnly? date, string? cabin)
+    private static bool Matches(Flight flight, string? origin, string? destination, DateOnly? date, int? passengers, string? cabin)
     {
         if (!MatchesPlace(origin, flight.OriginCode, flight.OriginCity))
         {
@@ -84,6 +85,11 @@ public class FlightService : IFlightService
             return false;
         }
 
+        if (passengers.HasValue && flight.SeatsAvailable < passengers.Value)
+        {
+            return false;
+        }
+
         if (!string.IsNullOrWhiteSpace(cabin) &&
             !string.Equals(flight.CabinClass, cabin.Trim(), StringComparison.OrdinalIgnoreCase))
         {
@@ -91,6 +97,13 @@ public class FlightService : IFlightService
         }
 
         return true;
+    }
+
+    private static IEnumerable<FlightResponse> Sort(IEnumerable<FlightResponse> flights, string? sort)
+    {
+        return string.Equals(sort, "price", StringComparison.OrdinalIgnoreCase)
+            ? flights.OrderBy(flight => flight.Price).ThenBy(flight => flight.DepartureAt)
+            : flights.OrderBy(flight => flight.DepartureAt).ThenBy(flight => flight.Price);
     }
 
     private static bool MatchesPlace(string? query, string code, string city)

@@ -6,7 +6,7 @@ public interface IBookingService
 {
     Task<IReadOnlyList<BookingResponse>> GetAllAsync(CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<BookingResponse>> GetMineAsync(string userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<BookingResponse>> GetMineAsync(string userId, string? bookingType = null, CancellationToken cancellationToken = default);
 
     Task<BookingResponse> GetByIdAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default);
 

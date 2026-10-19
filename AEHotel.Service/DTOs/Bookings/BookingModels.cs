@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AEHotel.Service.DTOs.Bookings;
 
 public class BookingRequest
@@ -108,4 +110,7 @@ public class BookingResponse
     public int? PaymentId { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public TripSuggestionResponse? TripSuggestions { get; set; }
 }

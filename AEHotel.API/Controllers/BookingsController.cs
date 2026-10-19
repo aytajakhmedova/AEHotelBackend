@@ -27,9 +27,11 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("mine")]
-    public async Task<ActionResult<IReadOnlyList<BookingResponse>>> GetMine(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<BookingResponse>>> GetMine(
+        [FromQuery] string? bookingType,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _bookingService.GetMineAsync(User.GetRequiredUserId(), cancellationToken));
+        return Ok(await _bookingService.GetMineAsync(User.GetRequiredUserId(), bookingType, cancellationToken));
     }
 
     [HttpGet("{id:int}")]

@@ -14,6 +14,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Tour> Tours { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    public DbSet<SiteSettings> SiteSettings { get; set; }
+    public DbSet<SiteMenuItem> SiteMenuItems { get; set; }
+    public DbSet<SiteSlide> SiteSlides { get; set; }
+    public DbSet<SiteAdvantage> SiteAdvantages { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

@@ -10,12 +10,14 @@ public static class DependencyInjection
     {
         services.AddScoped<IHotelService, HotelService>();
         services.AddScoped<IRoomService, RoomService>();
-        services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IFlightService, FlightService>();
         services.AddScoped<ITourService, TourService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<ITripSuggestionService, TripSuggestionService>();
+        services.AddScoped<ISiteContentService, SiteContentService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;

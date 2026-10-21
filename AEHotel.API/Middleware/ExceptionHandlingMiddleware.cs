@@ -31,6 +31,10 @@ public class ExceptionHandlingMiddleware
         {
             await WriteErrorAsync(context, StatusCodes.Status400BadRequest, exception.Message);
         }
+        catch (InvalidOperationException exception)
+        {
+            await WriteErrorAsync(context, StatusCodes.Status503ServiceUnavailable, exception.Message);
+        }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Unhandled API exception.");

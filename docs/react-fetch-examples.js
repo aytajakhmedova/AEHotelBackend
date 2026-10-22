@@ -23,109 +23,109 @@ async function requestJson(path, options = {}) {
   return data;
 }
 
-export function getHotels() {
-  return requestJson("/api/hotels");
+export function searchHotels({ city, checkIn, checkOut, guests } = {}) {
+  const query = new URLSearchParams();
+  if (city) query.set("city", city);
+  if (checkIn) query.set("checkIn", checkIn);
+  if (checkOut) query.set("checkOut", checkOut);
+  if (guests) query.set("guests", String(guests));
+  const suffix = query.toString() ? `?${query}` : "";
+  return requestJson(`/api/hotels${suffix}`);
 }
 
-export function getHotel(id) {
-  return requestJson(`/api/hotels/${id}`);
+export function searchFlights({ origin, destination, date, passengers, sort = "price" } = {}) {
+  const query = new URLSearchParams();
+  if (origin) query.set("origin", origin);
+  if (destination) query.set("destination", destination);
+  if (date) query.set("date", date);
+  if (passengers) query.set("passengers", String(passengers));
+  if (sort) query.set("sort", sort);
+  return requestJson(`/api/flights?${query}`);
 }
 
-export function createHotel(hotel) {
-  return requestJson("/api/hotels", {
+export function searchTours({ destination, date, guests } = {}) {
+  const query = new URLSearchParams();
+  if (destination) query.set("destination", destination);
+  if (date) query.set("date", date);
+  if (guests) query.set("guests", String(guests));
+  const suffix = query.toString() ? `?${query}` : "";
+  return requestJson(`/api/tours${suffix}`);
+}
+
+export function getTripSuggestions({ city, checkIn, checkOut, guests } = {}) {
+  const query = new URLSearchParams();
+  if (city) query.set("city", city);
+  if (checkIn) query.set("checkIn", checkIn);
+  if (checkOut) query.set("checkOut", checkOut);
+  if (guests) query.set("guests", String(guests));
+  return requestJson(`/api/trip-suggestions?${query}`);
+}
+
+export function getMyReservations(token, bookingType) {
+  const suffix = bookingType ? `?bookingType=${encodeURIComponent(bookingType)}` : "";
+  return requestJson(`/api/bookings/mine${suffix}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function createBooking(token, booking) {
+  return requestJson("/api/bookings", {
     method: "POST",
-    body: JSON.stringify(hotel),
-  });
-}
-
-export function updateHotel(id, hotel) {
-  return requestJson(`/api/hotels/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(hotel),
-  });
-}
-
-export function deleteHotel(id) {
-  return requestJson(`/api/hotels/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export function getRooms() {
-  return requestJson("/api/rooms");
-}
-
-export function getHotelRooms(hotelId) {
-  return requestJson(`/api/hotels/${hotelId}/rooms`);
-}
-
-export function getRoom(id) {
-  return requestJson(`/api/rooms/${id}`);
-}
-
-export function createRoom(room) {
-  return requestJson("/api/rooms", {
-    method: "POST",
-    body: JSON.stringify(room),
-  });
-}
-
-export function updateRoom(id, room) {
-  return requestJson(`/api/rooms/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(room),
-  });
-}
-
-export function deleteRoom(id) {
-  return requestJson(`/api/rooms/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export function getReservations() {
-  return requestJson("/api/reservations");
-}
-
-export function getReservation(id) {
-  return requestJson(`/api/reservations/${id}`);
-}
-
-export function createReservation(reservation) {
-  return requestJson("/api/reservations", {
-    method: "POST",
-    body: JSON.stringify(reservation),
-  });
-}
-
-export function updateReservation(id, reservation) {
-  return requestJson(`/api/reservations/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(reservation),
-  });
-}
-
-export function deleteReservation(id) {
-  return requestJson(`/api/reservations/${id}`, {
-    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(booking),
   });
 }
 
 /*
-React component icinde ornek:
+Hotel axtarisi:
 
-import { getHotels, createReservation } from "./api/aeHotelApi";
+const hotels = await searchHotels({
+  city: "Antalya",
+  checkIn: "2026-11-10",
+  checkOut: "2026-11-14",
+  guests: 2,
+});
 
-const hotels = await getHotels();
+Otel rezervasiyasi (eyni hesab, sonra optional ucus/tur teklifi):
 
-const reservation = await createReservation({
-  hotelId: 1,
-  roomId: 1,
+const booking = await createBooking(token, {
+  bookingType: "hotel",
+  hotelId: 3,
+  roomId: 5,
   guestName: "Aytac Ahmedova",
   guestEmail: "guest@example.com",
   checkIn: "2026-11-10",
   checkOut: "2026-11-14",
   guests: 2,
-  status: "confirmed",
+  paymentMethod: "card",
 });
+
+booking.tripSuggestions; // mecburi deyil
+
+Ucus:
+
+await createBooking(token, {
+  bookingType: "flight",
+  flightId: 1,
+  guestName: "Aytac Ahmedova",
+  guestEmail: "guest@example.com",
+  guests: 2,
+  paymentMethod: "card",
+});
+
+Tur:
+
+await createBooking(token, {
+  bookingType: "tour",
+  tourId: 1,
+  travelDate: "2026-11-15",
+  guestName: "Aytac Ahmedova",
+  guestEmail: "guest@example.com",
+  guests: 2,
+  paymentMethod: "card",
+});
+
+Rezervasiyalarim:
+
+const mine = await getMyReservations(token);
 */

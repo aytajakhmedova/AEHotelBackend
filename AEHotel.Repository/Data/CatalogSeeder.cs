@@ -14,6 +14,15 @@ public static class CatalogSeeder
 
     public static async Task SeedAsync(AppDbContext context)
     {
+        await SeedHotelsAsync(context);
+        await SeedFlightsAsync(context);
+        await SeedToursAsync(context);
+        await EnsureCrossSellAsync(context);
+        await SeedSiteContentAsync(context);
+    }
+
+    private static async Task SeedHotelsAsync(AppDbContext context)
+    {
         if (await context.Hotels.AnyAsync())
         {
             return;
@@ -43,6 +52,15 @@ public static class CatalogSeeder
         ];
 
         context.Hotels.AddRange(hotels);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedFlightsAsync(AppDbContext context)
+    {
+        if (await context.Flights.AnyAsync())
+        {
+            return;
+        }
 
         var flightTemplates = new (string Airline, string Number, string FromCode, string FromCity, string FromCountry, string ToCode, string ToCity, string ToCountry, int DepHour, int DepMinute, int ArrHour, int ArrMinute, string Duration, int Stops, decimal Price, string Cabin, int Seats, bool Refundable)[]
         {
@@ -58,6 +76,16 @@ public static class CatalogSeeder
             {
                 context.Flights.Add(Flight(item.Airline, item.Number, item.FromCode, item.FromCity, item.FromCountry, item.ToCode, item.ToCity, item.ToCountry, day, item.DepHour, item.DepMinute, item.ArrHour, item.ArrMinute, item.Duration, item.Stops, item.Price, item.Cabin, item.Seats, item.Refundable));
             }
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedToursAsync(AppDbContext context)
+    {
+        if (await context.Tours.AnyAsync())
+        {
+            return;
         }
 
         context.Tours.AddRange(
@@ -79,6 +107,41 @@ public static class CatalogSeeder
                 ["Nahar"],
                 [("Şəki mərkəzi", new[] { "Xan sarayı", "Kərvansaray" })],
                 ["2026-11-12", "2026-12-03"]));
+
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureCrossSellAsync(AppDbContext context)
+    {
+        if (!await context.Hotels.AnyAsync(hotel => hotel.City == "Bakı"))
+        {
+            var baku = Hotel("Fairmont Bakı Flame Towers", "Bakı", "Azərbaycan", "Flame Towers", "Mehdi Hüseyn küçəsi 1A", 5, 4.8m, 964, "Şəhər mərkəzində Flame Towers yanında otel.", 260m, "Şəhər", "hotelimg1.jfif", ["Wi-Fi", "Hovuz", "Restoran"]);
+            baku.Rooms =
+            [
+                Room(baku, "City View", "Şəhər mənzərəli otaq.", 2, "1 King yataq", "34 m2", 260m, "hotelimg1.jfif", ["Wi-Fi", "Smart TV"]),
+                Room(baku, "Family Room", "Ailə otağı.", 4, "1 King + 2 twin", "46 m2", 340m, "hotelimg5.jfif", ["Wi-Fi", "Ailə"])
+            ];
+            context.Hotels.Add(baku);
+        }
+
+        if (!await context.Flights.AnyAsync(flight => flight.FlightNumber == "J2-781"))
+        {
+            foreach (var day in new[] { 10, 15, 20, 25, 28 })
+            {
+                context.Flights.Add(Flight("AZAL", "J2-781", "GYD", "Bakı", "Azərbaycan", "AYT", "Antalya", "Türkiyə", day, 8, 40, 11, 5, "2s 25dəq", 0, 195m, "economy", 18, true));
+                context.Flights.Add(Flight("AZAL", "J2-782", "AYT", "Antalya", "Türkiyə", "GYD", "Bakı", "Azərbaycan", day, 18, 10, 20, 35, "2s 25dəq", 0, 195m, "economy", 18, true));
+            }
+        }
+
+        if (!await context.Tours.AnyAsync(tour => tour.Name == "Antalya Sahil Turu"))
+        {
+            context.Tours.Add(Tour("Antalya Sahil Turu", "Antalya, Türkiyə", 4.6m, 188, "3 gün / 2 gecə", 720m, "hotelimg4.jfif", "Lara sahili və şəhər mərkəzi marşrutu.", "Sahil", "Asan", 1, 20,
+                ["Lara sahili", "Kaleiçi"],
+                ["Otel", "Transfer", "Bələdçi"],
+                ["Uçuş", "Şəxsi xərclər"],
+                [("Sahil günü", new[] { "Lara plajı", "Kaleiçi" })],
+                ["2026-11-10", "2026-11-15", "2026-11-20", "2026-11-25"]));
+        }
 
         await context.SaveChangesAsync();
     }
@@ -175,5 +238,130 @@ public static class CatalogSeeder
             ItineraryJson = JsonSerializer.Serialize(itinerary),
             AvailableDatesJson = JsonSerializer.Serialize(dates)
         };
+    }
+
+    private static async Task SeedSiteContentAsync(AppDbContext context)
+    {
+        if (!await context.SiteSettings.AnyAsync())
+        {
+            context.SiteSettings.Add(new SiteSettings
+            {
+                SiteName = "AEHotel",
+                LogoUrl = "/uploads/AE_HOTEL_transparent_logo.png",
+                HeroKicker = "Otel & Travel · AE Hotel",
+                HeroTitleBefore = "Yaxınlıqdakı ən yaxşı",
+                HeroTitleAccent = "otelləri",
+                HeroTitleAfter = "və turları tapın.",
+                HeroDescription = "Yalnız yer yox — büdcənizə uyğun lüks təcrübə, uçuş və turu bir yerdə bron edin.",
+                HeroPrimaryButtonText = "İndi kəşf et",
+                HeroPrimaryButtonUrl = "#featured",
+                HeroSecondaryButtonText = "Hekayəmizi izlə",
+                HeroVideoUrl = "/uploads/aehotel-promo.mp4",
+                HeroFloatImage1Url = "/uploads/hotelimg6.jfif",
+                HeroFloatImage2Url = "/uploads/hotelimg7.jfif",
+                HeroSupportBadge = "7/24",
+                HeroSupportLabel = "Müştəri dəstəyi",
+                HeroStoryTitle = "AE Hotel hekayəsi",
+                HeroStoryText = "2018-dən bəri minlərlə səyahətçini lüks otellərlə, şəhər turları və wellness təcrübələri ilə birləşdiririk. Hər rezervasiya — şəxsi konsultasiya kimidir.",
+                AdvantagesTitle = "Ən yaxşı tətil buradan başlayır",
+                AdvantagesDescription = "Oteli bron edin, eyni anda uçuş və tur əlavə edin — kampaniya kodları ilə qalmanızı daha sərfəli edin.",
+                AdvantagesImageUrl = "/uploads/hotelimg2.jfif",
+                AdvantagesRating = "4.8",
+                GalleryTitle = "AE Hotel dünyası",
+                FeaturedEyebrow = "Seçilmiş kolleksiya",
+                FeaturedTitle = "Önə çıxan otellər",
+                FooterDescription = "AE Hotel-də lüks sadəcə ünvan deyil — hiss, təcrübə və həyat tərzidir. Otel, uçuş və tur bir platformada.",
+                FooterLinksTitle = "Keçidlər",
+                FooterHoursTitle = "Dəstək saatları",
+                FooterContactTitle = "Əlaqə",
+                HoursWeekdays = "Bazar ertəsi – Cümə",
+                HoursSaturday = "Şənbə",
+                HoursSunday = "Bazar",
+                HoursValue = "24 saat",
+                ContactAddress = "UK, 1212, 192/8 New Elephant Road London",
+                ContactEmail = "info@aehotel.com",
+                ContactPhone = "(094) 542 - 4789",
+                CopyrightText = "© 2026 AE Hotel. All rights reserved.",
+                PrivacyUrl = "#",
+                TermsUrl = "#",
+                LinkedInUrl = "#",
+                TwitterUrl = "#",
+                InstagramUrl = "#",
+                FacebookUrl = "#",
+                NoticeSummer = "Yay endirimi — otellərdə 20%-dək",
+                NoticeSupport = "7/24 dəstək aktivdir"
+            });
+        }
+
+        if (!await context.SiteMenuItems.AnyAsync())
+        {
+            context.SiteMenuItems.AddRange(
+                new SiteMenuItem { Label = "Otellər", Url = "/hotels", Placement = "discover", IsRoute = true, SortOrder = 1, IsActive = true },
+                new SiteMenuItem { Label = "Təyinatlar", Url = "/destinations", Placement = "discover", IsRoute = true, SortOrder = 2, IsActive = true },
+                new SiteMenuItem { Label = "Turlar", Url = "/tours", Placement = "discover", IsRoute = true, SortOrder = 3, IsActive = true },
+                new SiteMenuItem { Label = "Haqqımızda", Url = "/about", Placement = "pages", IsRoute = true, SortOrder = 1, IsActive = true },
+                new SiteMenuItem { Label = "Rəylər", Url = "/reviews", Placement = "pages", IsRoute = true, SortOrder = 2, IsActive = true },
+                new SiteMenuItem { Label = "Qalereya", Url = "/gallery", Placement = "pages", IsRoute = true, SortOrder = 3, IsActive = true },
+                new SiteMenuItem { Label = "Otel", Url = "/hotels", Placement = "quick", IconKey = "hotel", IsRoute = true, SortOrder = 1, IsActive = true },
+                new SiteMenuItem { Label = "Uçuş", Url = "/flights", Placement = "quick", IconKey = "plane", IsRoute = true, SortOrder = 2, IsActive = true },
+                new SiteMenuItem { Label = "Tur", Url = "/tours", Placement = "quick", IconKey = "car", IsRoute = true, SortOrder = 3, IsActive = true },
+                new SiteMenuItem { Label = "Ana səhifə", Url = "/", Placement = "footer", IsRoute = true, SortOrder = 1, IsActive = true },
+                new SiteMenuItem { Label = "Haqqımızda", Url = "/about", Placement = "footer", IsRoute = true, SortOrder = 2, IsActive = true },
+                new SiteMenuItem { Label = "Otellər", Url = "/hotels", Placement = "footer", IsRoute = true, SortOrder = 3, IsActive = true },
+                new SiteMenuItem { Label = "Turlar", Url = "/tours", Placement = "footer", IsRoute = true, SortOrder = 4, IsActive = true }
+            );
+        }
+
+        if (!await context.SiteAdvantages.AnyAsync())
+        {
+            context.SiteAdvantages.AddRange(
+                new SiteAdvantage { IconKey = "utensils", Color = "#4ade80", Title = "Keyfiyyətli yemək", Description = "Yerli və beynəlxalq mətbəx — chef menyusu və halal seçimlər.", SortOrder = 1, IsActive = true },
+                new SiteAdvantage { IconKey = "bolt", Color = "#f43f5e", Title = "Sürətli xidmət", Description = "Dəqiqəlik check-in, ani təsdiq və 24 saat otaq xidməti.", SortOrder = 2, IsActive = true },
+                new SiteAdvantage { IconKey = "shield", Color = "#fb923c", Title = "Təhlükəsiz ödəniş", Description = "SSL bron, geri qaytarılan tariflər və sığorta paketləri.", SortOrder = 3, IsActive = true },
+                new SiteAdvantage { IconKey = "clock", Color = "#3b82f6", Title = "7/24 dəstək", Description = "Səyahət boyu canlı dəstək.", SortOrder = 4, IsActive = true }
+            );
+        }
+
+        var taxiMenus = await context.SiteMenuItems
+            .Where(item => item.Url == "/taxis" || item.IconKey == "taxi")
+            .ToListAsync();
+        if (taxiMenus.Count > 0)
+        {
+            context.SiteMenuItems.RemoveRange(taxiMenus);
+        }
+
+        var settings = await context.SiteSettings.FirstOrDefaultAsync();
+        if (settings != null)
+        {
+            if (settings.FooterDescription.Contains("taksi", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.FooterDescription = "AE Hotel-də lüks sadəcə ünvan deyil — hiss, təcrübə və həyat tərzidir. Otel, uçuş və tur bir platformada.";
+            }
+
+            if (settings.HeroDescription.Contains("transfer", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.HeroDescription = "Yalnız yer yox — büdcənizə uyğun lüks təcrübə, uçuş və turu bir yerdə bron edin.";
+            }
+
+            if (settings.AdvantagesDescription.Contains("transfer", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.AdvantagesDescription = "Oteli bron edin, eyni anda uçuş və tur əlavə edin — kampaniya kodları ilə qalmanızı daha sərfəli edin.";
+            }
+        }
+
+        if (!await context.SiteSlides.AnyAsync())
+        {
+            context.SiteSlides.AddRange(
+                new SiteSlide { ImageUrl = "/uploads/hotelimg1.jfif", Title = "Gecə şəhər mənzərəsi", SortOrder = 1, IsActive = true },
+                new SiteSlide { ImageUrl = "/uploads/hotelimg2.jfif", Title = "Otel girişi", SortOrder = 2, IsActive = true },
+                new SiteSlide { ImageUrl = "/uploads/hotelimg4.jfif", Title = "Dənizə baxan otaq", SortOrder = 3, IsActive = true },
+                new SiteSlide { ImageUrl = "/uploads/hotelimg6.jfif", Title = "Fəvvarə və işıqlar", SortOrder = 4, IsActive = true },
+                new SiteSlide { ImageUrl = "/uploads/hotelimg3.jfif", Title = "Sahil yataq otağı", SortOrder = 5, IsActive = true },
+                new SiteSlide { ImageUrl = "/uploads/hotelimg5.jfif", Title = "Dam hovuzu", SortOrder = 6, IsActive = true },
+                new SiteSlide { ImageUrl = "/uploads/hotelimg7.jfif", Title = "Şəhər suitı", SortOrder = 7, IsActive = true }
+            );
+        }
+
+        await context.SaveChangesAsync();
     }
 }

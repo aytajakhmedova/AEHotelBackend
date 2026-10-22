@@ -7,11 +7,20 @@ using AEHotel.Repository.Data;
 using AEHotel.Service;
 using AEHotel.Service.Security;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.PostConfigure<EmailOptions>(options =>
+{
+    if (!string.IsNullOrWhiteSpace(options.PickupDirectory) && !Path.IsPathRooted(options.PickupDirectory))
+    {
+        options.PickupDirectory = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, options.PickupDirectory));
+    }
+});
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
     ?? throw new InvalidOperationException("Jwt configuration is missing.");
 if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
@@ -43,6 +52,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddRepository(builder.Configuration);
+var emailOptions = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>() ?? new EmailOptions();
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    var hours = emailOptions.TokenLifespanHours > 0 ? emailOptions.TokenLifespanHours : 2;
+    options.TokenLifespan = TimeSpan.FromHours(hours);
+});
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;
@@ -70,7 +85,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+            {
+                if (allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                return Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                    && uri.IsLoopback
+                    && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+            })
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -91,7 +116,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(Path.Combine(webRoot, "uploads"));
+app.Environment.WebRootPath = webRoot;
+MediaFileSeeder.Seed(app.Environment);
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+var contentTypes = new FileExtensionContentTypeProvider();
+contentTypes.Mappings[".jfif"] = "image/jpeg";
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = contentTypes });
 app.UseRouting();
 app.UseCors("ReactClient");
 app.UseAuthentication();

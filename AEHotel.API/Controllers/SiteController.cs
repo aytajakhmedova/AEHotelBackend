@@ -32,21 +32,21 @@ public class SiteController : ControllerBase
     }
 
     [HttpPut("settings")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteSettingsResponse>> UpdateSettings(SiteSettingsRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _site.UpdateSettingsAsync(request, cancellationToken));
     }
 
     [HttpGet("menu-items")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<IReadOnlyList<SiteMenuItemResponse>>> GetMenuItems(CancellationToken cancellationToken)
     {
         return Ok(await _site.GetMenuItemsAsync(cancellationToken));
     }
 
     [HttpPost("menu-items")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteMenuItemResponse>> CreateMenuItem(SiteMenuItemRequest request, CancellationToken cancellationToken)
     {
         var created = await _site.CreateMenuItemAsync(request, cancellationToken);
@@ -54,14 +54,14 @@ public class SiteController : ControllerBase
     }
 
     [HttpPut("menu-items/{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteMenuItemResponse>> UpdateMenuItem(int id, SiteMenuItemRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _site.UpdateMenuItemAsync(id, request, cancellationToken));
     }
 
     [HttpDelete("menu-items/{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> DeleteMenuItem(int id, CancellationToken cancellationToken)
     {
         await _site.DeleteMenuItemAsync(id, cancellationToken);
@@ -69,14 +69,14 @@ public class SiteController : ControllerBase
     }
 
     [HttpGet("slides")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<IReadOnlyList<SiteSlideResponse>>> GetSlides(CancellationToken cancellationToken)
     {
         return Ok(await _site.GetSlidesAsync(cancellationToken));
     }
 
     [HttpPost("slides")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteSlideResponse>> CreateSlide(SiteSlideRequest request, CancellationToken cancellationToken)
     {
         var created = await _site.CreateSlideAsync(request, cancellationToken);
@@ -84,14 +84,14 @@ public class SiteController : ControllerBase
     }
 
     [HttpPut("slides/{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteSlideResponse>> UpdateSlide(int id, SiteSlideRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _site.UpdateSlideAsync(id, request, cancellationToken));
     }
 
     [HttpDelete("slides/{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> DeleteSlide(int id, CancellationToken cancellationToken)
     {
         await _site.DeleteSlideAsync(id, cancellationToken);
@@ -99,14 +99,14 @@ public class SiteController : ControllerBase
     }
 
     [HttpGet("advantages")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<IReadOnlyList<SiteAdvantageResponse>>> GetAdvantages(CancellationToken cancellationToken)
     {
         return Ok(await _site.GetAdvantagesAsync(cancellationToken));
     }
 
     [HttpPost("advantages")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteAdvantageResponse>> CreateAdvantage(SiteAdvantageRequest request, CancellationToken cancellationToken)
     {
         var created = await _site.CreateAdvantageAsync(request, cancellationToken);
@@ -114,14 +114,14 @@ public class SiteController : ControllerBase
     }
 
     [HttpPut("advantages/{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteAdvantageResponse>> UpdateAdvantage(int id, SiteAdvantageRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _site.UpdateAdvantageAsync(id, request, cancellationToken));
     }
 
     [HttpDelete("advantages/{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> DeleteAdvantage(int id, CancellationToken cancellationToken)
     {
         await _site.DeleteAdvantageAsync(id, cancellationToken);

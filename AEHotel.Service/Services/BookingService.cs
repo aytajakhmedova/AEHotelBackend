@@ -287,7 +287,7 @@ public class BookingService : IBookingService
         booking.Guests = request.Guests;
         booking.Nights = 0;
         booking.PricePerNight = flight.Price;
-        booking.TotalPrice = flight.Price * request.Guests;
+        booking.TotalPrice = ApplyBundlePrice(flight.Price * request.Guests, request.BundleWithHotel);
         booking.ItemName = $"{flight.Airline} {flight.FlightNumber}";
         booking.Location = $"{flight.OriginCity} ({flight.OriginCode}) - {flight.DestinationCity} ({flight.DestinationCode})";
     }
@@ -324,7 +324,7 @@ public class BookingService : IBookingService
         booking.Guests = request.Guests;
         booking.Nights = 0;
         booking.PricePerNight = tour.Price;
-        booking.TotalPrice = tour.Price * request.Guests;
+        booking.TotalPrice = ApplyBundlePrice(tour.Price * request.Guests, request.BundleWithHotel);
         booking.ItemName = tour.Name;
         booking.Location = tour.Destination;
     }
@@ -401,6 +401,16 @@ public class BookingService : IBookingService
         }
 
         return value;
+    }
+
+    private static decimal ApplyBundlePrice(decimal total, bool bundleWithHotel)
+    {
+        if (!bundleWithHotel)
+        {
+            return total;
+        }
+
+        return Math.Round(total * 0.9m, 2, MidpointRounding.AwayFromZero);
     }
 
     private static string CreateCode()

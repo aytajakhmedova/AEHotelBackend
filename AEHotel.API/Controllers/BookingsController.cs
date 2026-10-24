@@ -20,7 +20,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<IReadOnlyList<BookingResponse>>> GetAll(CancellationToken cancellationToken)
     {
         return Ok(await _bookingService.GetAllAsync(cancellationToken));
@@ -54,7 +54,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPut("{id:int}/status")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<BookingResponse>> UpdateStatus(int id, BookingStatusRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _bookingService.UpdateStatusAsync(id, request.Status, User.GetRequiredUserId(), true, cancellationToken));

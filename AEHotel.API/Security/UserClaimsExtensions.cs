@@ -17,5 +17,6 @@ public static class UserClaimsExtensions
         return userId;
     }
 
-    public static bool IsAdmin(this ClaimsPrincipal user) => user.IsInRole(AppRoles.Admin);
+    public static bool IsAdmin(this ClaimsPrincipal user) =>
+        user.IsInRole(AppRoles.Admin) || user.IsInRole(AppRoles.SuperAdmin);
 }

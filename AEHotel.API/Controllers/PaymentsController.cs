@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AEHotel.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = AppRoles.Admin)]
+[Authorize(Roles = AppRoles.Staff)]
 [Route("api/payments")]
 public class PaymentsController : ControllerBase
 {

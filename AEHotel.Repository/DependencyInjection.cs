@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<ISiteContentRepository, SiteContentRepository>();
+        services.AddScoped<IDiscountPackageRepository, DiscountPackageRepository>();
 
         return services;
     }

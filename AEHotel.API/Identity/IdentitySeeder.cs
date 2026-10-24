@@ -9,7 +9,11 @@ public static class IdentitySeeder
     public static async Task SeedAsync(IServiceProvider services, IConfiguration configuration)
     {
         var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
-        foreach (var roleName in new[] { AppRoles.SuperAdmin, AppRoles.Admin, AppRoles.Member, AppRoles.User })
+        foreach (var roleName in new[]
+                 {
+                     AppRoles.SuperAdmin, AppRoles.Admin, AppRoles.HotelManager, AppRoles.Receptionist,
+                     AppRoles.Customer, AppRoles.Member, AppRoles.User
+                 })
         {
             if (!await roles.RoleExistsAsync(roleName))
             {
@@ -36,7 +40,8 @@ public static class IdentitySeeder
                 account.Password,
                 account.Name,
                 account.Surname,
-                account.Role);
+                account.Role,
+                account.AssignedHotelId);
         }
     }
 
@@ -46,7 +51,8 @@ public static class IdentitySeeder
         string? password,
         string? name,
         string? surname,
-        string? role)
+        string? role,
+        int? assignedHotelId = null)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(role))
         {
@@ -63,6 +69,7 @@ public static class IdentitySeeder
                 EmailConfirmed = true,
                 Name = string.IsNullOrWhiteSpace(name) ? "Aytac" : name.Trim(),
                 Surname = string.IsNullOrWhiteSpace(surname) ? role : surname.Trim(),
+                AssignedHotelId = assignedHotelId,
                 CreatedAt = DateTime.UtcNow,
                 BirthDay = DateTime.UtcNow.Date
             };
@@ -79,6 +86,12 @@ public static class IdentitySeeder
         {
             await users.AddToRoleAsync(user, role);
         }
+
+        if (assignedHotelId.HasValue && user.AssignedHotelId != assignedHotelId)
+        {
+            user.AssignedHotelId = assignedHotelId;
+            await users.UpdateAsync(user);
+        }
     }
 
     private sealed class SeedAccount
@@ -88,5 +101,6 @@ public static class IdentitySeeder
         public string Name { get; set; } = "Aytac";
         public string Surname { get; set; } = string.Empty;
         public string Role { get; set; } = AppRoles.User;
+        public int? AssignedHotelId { get; set; }
     }
 }

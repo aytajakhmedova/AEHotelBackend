@@ -38,7 +38,7 @@ public class FlightsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<FlightResponse>> Create(FlightRequest request, CancellationToken cancellationToken)
     {
         var created = await _flightService.CreateAsync(request, cancellationToken);
@@ -46,14 +46,14 @@ public class FlightsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<FlightResponse>> Update(int id, FlightRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _flightService.UpdateAsync(id, request, cancellationToken));
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _flightService.DeleteAsync(id, cancellationToken);

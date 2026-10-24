@@ -44,7 +44,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<RoomResponse>> Create(RoomRequest request, CancellationToken cancellationToken)
     {
         var created = await _roomService.CreateAsync(request, cancellationToken);
@@ -52,7 +52,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<RoomResponse>> Update(int id, RoomRequest request, CancellationToken cancellationToken)
     {
         var updated = await _roomService.UpdateAsync(id, request, cancellationToken);
@@ -73,7 +73,7 @@ public class RoomsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _roomService.DeleteAsync(id, cancellationToken);

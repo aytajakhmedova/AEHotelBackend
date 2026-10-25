@@ -23,6 +23,8 @@ public class Room : BaseEntity
 
     public bool Available { get; set; } = true;
 
+    public string HousekeepingStatus { get; set; } = "ready";
+
     public string ImageFile { get; set; } = string.Empty;
 
     public string AmenitiesJson { get; set; } = "[]";

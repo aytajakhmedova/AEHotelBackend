@@ -142,6 +142,9 @@ public class HotelService : IHotelService
         hotel.HotelType = request.HotelType.Trim();
         hotel.CheckInTime = string.IsNullOrWhiteSpace(request.CheckInTime) ? "14:00" : request.CheckInTime.Trim();
         hotel.CheckOutTime = string.IsNullOrWhiteSpace(request.CheckOutTime) ? "12:00" : request.CheckOutTime.Trim();
+        hotel.CancellationPolicy = string.IsNullOrWhiteSpace(request.CancellationPolicy)
+            ? "Check-in tarixindən əvvəl ləğv etmək olar."
+            : request.CancellationPolicy.Trim();
         hotel.ImageFile = request.ImageFile.Trim();
         hotel.AmenitiesJson = JsonLists.WriteStrings(request.Amenities);
     }

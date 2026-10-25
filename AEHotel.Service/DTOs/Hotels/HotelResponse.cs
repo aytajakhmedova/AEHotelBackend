@@ -32,6 +32,8 @@ public class HotelResponse
 
     public string CheckOutTime { get; set; } = string.Empty;
 
+    public string CancellationPolicy { get; set; } = string.Empty;
+
     public string ImageFile { get; set; } = string.Empty;
 
     public IReadOnlyList<string> Amenities { get; set; } = [];

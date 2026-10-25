@@ -1,3 +1,4 @@
+using AEHotel.API.Security;
 using AEHotel.Service.DTOs.Rooms;
 using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
@@ -21,6 +22,12 @@ public class RoomsController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<RoomResponse>>> GetAll(CancellationToken cancellationToken)
     {
         var rooms = await _roomService.GetAllAsync(cancellationToken);
+        if (User.Identity?.IsAuthenticated == true && User.TryGetHotelScope(out var scopedHotelId))
+        {
+            rooms = scopedHotelId == 0
+                ? []
+                : rooms.Where(room => room.HotelId == scopedHotelId).ToList();
+        }
         return Ok(rooms);
     }
 
@@ -44,17 +51,19 @@ public class RoomsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = AppRoles.Staff)]
+    [Authorize(Roles = AppRoles.CatalogEditors)]
     public async Task<ActionResult<RoomResponse>> Create(RoomRequest request, CancellationToken cancellationToken)
     {
+        User.EnsureHotelScope(request.HotelId);
         var created = await _roomService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = AppRoles.Staff)]
+    [Authorize(Roles = AppRoles.CatalogEditors)]
     public async Task<ActionResult<RoomResponse>> Update(int id, RoomRequest request, CancellationToken cancellationToken)
     {
+        User.EnsureHotelScope(request.HotelId);
         var updated = await _roomService.UpdateAsync(id, request, cancellationToken);
         return Ok(updated);
     }
@@ -73,9 +82,11 @@ public class RoomsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = AppRoles.Staff)]
+    [Authorize(Roles = AppRoles.CatalogEditors)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
+        var room = await _roomService.GetByIdAsync(id, cancellationToken);
+        User.EnsureHotelScope(room.HotelId);
         await _roomService.DeleteAsync(id, cancellationToken);
         return NoContent();
     }

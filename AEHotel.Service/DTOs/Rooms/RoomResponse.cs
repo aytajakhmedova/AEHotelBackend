@@ -22,6 +22,8 @@ public class RoomResponse
 
     public bool Available { get; set; }
 
+    public string HousekeepingStatus { get; set; } = "ready";
+
     public bool IsAvailable { get; set; } = true;
 
     public string ImageFile { get; set; } = string.Empty;

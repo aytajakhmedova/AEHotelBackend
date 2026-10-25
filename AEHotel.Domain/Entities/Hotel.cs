@@ -31,6 +31,8 @@ public class Hotel : BaseEntity
 
     public string CheckOutTime { get; set; } = "12:00";
 
+    public string CancellationPolicy { get; set; } = "Check-in tarixindən əvvəl ləğv etmək olar.";
+
     public string ImageFile { get; set; } = string.Empty;
 
     public string AmenitiesJson { get; set; } = "[]";

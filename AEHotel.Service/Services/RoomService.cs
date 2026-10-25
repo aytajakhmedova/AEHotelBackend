@@ -192,6 +192,9 @@ public class RoomService : IRoomService
         room.Size = request.Size.Trim();
         room.PricePerNight = request.PricePerNight;
         room.Available = request.Available;
+        room.HousekeepingStatus = string.Equals(request.HousekeepingStatus, "cleaning", StringComparison.OrdinalIgnoreCase)
+            ? "cleaning"
+            : "ready";
         room.ImageFile = request.ImageFile.Trim();
         room.AmenitiesJson = JsonLists.WriteStrings(request.Amenities);
     }

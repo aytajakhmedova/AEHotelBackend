@@ -13,6 +13,7 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
         entity.Property(room => room.BedType).HasMaxLength(150);
         entity.Property(room => room.Size).HasMaxLength(50);
         entity.Property(room => room.PricePerNight).HasPrecision(18, 2);
+        entity.Property(room => room.HousekeepingStatus).HasMaxLength(20);
         entity.Property(room => room.ImageFile).HasMaxLength(200);
         entity.Property(room => room.AmenitiesJson).HasMaxLength(2000);
 

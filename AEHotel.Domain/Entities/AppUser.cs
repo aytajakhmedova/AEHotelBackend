@@ -9,6 +9,7 @@ public class AppUser : IdentityUser
     public DateTime BirthDay { get; set; }
     public string? FinKod { get; set; }
     public bool IsRestricted { get; set; } = false;
+    public int? AssignedHotelId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();

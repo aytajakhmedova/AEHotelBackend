@@ -31,6 +31,8 @@ public class AuthResponse
     public string Name { get; set; } = string.Empty;
 
     public IReadOnlyList<string> Roles { get; set; } = [];
+
+    public int? AssignedHotelId { get; set; }
 }
 
 public class ForgotPasswordRequest

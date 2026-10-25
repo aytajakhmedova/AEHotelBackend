@@ -116,6 +116,7 @@ public class AuthService : IAuthService
                     email,
                     "AE Hotel password reset",
                     $"<p>Use this link to reset your password. It expires after {_emailOptions.TokenLifespanHours} hours.</p><p><a href=\"{link}\">{link}</a></p>",
+                    attachments: null,
                     cancellationToken);
             }
             catch (Exception exception) when (exception is not InvalidOperationException)
@@ -190,7 +191,8 @@ public class AuthService : IAuthService
             ExpiresAt = expiresAt,
             Email = user.Email ?? string.Empty,
             Name = string.IsNullOrWhiteSpace(user.Name) ? user.Email ?? string.Empty : user.Name,
-            Roles = roles.ToList()
+            Roles = roles.ToList(),
+            AssignedHotelId = user.AssignedHotelId
         };
     }
 }

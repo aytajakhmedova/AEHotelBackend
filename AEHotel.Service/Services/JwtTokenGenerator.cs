@@ -36,6 +36,11 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
+        if (user.AssignedHotelId is > 0)
+        {
+            claims.Add(new Claim("assignedHotelId", user.AssignedHotelId.Value.ToString()));
+        }
+
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)),
             SecurityAlgorithms.HmacSha256);

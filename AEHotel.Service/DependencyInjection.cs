@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<ITripSuggestionService, TripSuggestionService>();
         services.AddScoped<ISiteContentService, SiteContentService>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IDiscountService, DiscountService>();
+        services.AddScoped<IStayReviewService, StayReviewService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();

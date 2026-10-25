@@ -24,6 +24,7 @@ internal static class EntityMapper
             HotelType = hotel.HotelType,
             CheckInTime = hotel.CheckInTime,
             CheckOutTime = hotel.CheckOutTime,
+            CancellationPolicy = hotel.CancellationPolicy,
             ImageFile = hotel.ImageFile,
             Amenities = JsonLists.ReadStrings(hotel.AmenitiesJson),
             Rooms = hotel.Rooms.Select(room => MapRoom(room, IsRoomOpen(room, busyRoomIds, guests))).ToList()
@@ -44,6 +45,7 @@ internal static class EntityMapper
             Size = room.Size,
             PricePerNight = room.PricePerNight,
             Available = room.Available,
+            HousekeepingStatus = string.IsNullOrWhiteSpace(room.HousekeepingStatus) ? "ready" : room.HousekeepingStatus,
             IsAvailable = isAvailable ?? room.Available,
             ImageFile = room.ImageFile,
             Amenities = JsonLists.ReadStrings(room.AmenitiesJson)

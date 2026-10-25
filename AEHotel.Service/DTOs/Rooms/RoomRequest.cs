@@ -18,6 +18,8 @@ public class RoomRequest
 
     public bool Available { get; set; } = true;
 
+    public string HousekeepingStatus { get; set; } = "ready";
+
     public string ImageFile { get; set; } = string.Empty;
 
     public List<string> Amenities { get; set; } = [];

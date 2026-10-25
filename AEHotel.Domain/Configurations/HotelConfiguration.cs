@@ -17,6 +17,7 @@ public class HotelConfiguration : IEntityTypeConfiguration<Hotel>
         entity.Property(hotel => hotel.HotelType).HasMaxLength(100);
         entity.Property(hotel => hotel.CheckInTime).HasMaxLength(10);
         entity.Property(hotel => hotel.CheckOutTime).HasMaxLength(10);
+        entity.Property(hotel => hotel.CancellationPolicy).HasMaxLength(1000);
         entity.Property(hotel => hotel.PricePerNight).HasPrecision(18, 2);
         entity.Property(hotel => hotel.Rating).HasPrecision(3, 1);
         entity.Property(hotel => hotel.ImageFile).HasMaxLength(200);

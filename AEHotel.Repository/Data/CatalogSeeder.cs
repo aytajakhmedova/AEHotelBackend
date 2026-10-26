@@ -19,6 +19,22 @@ public static class CatalogSeeder
         await SeedToursAsync(context);
         await EnsureCrossSellAsync(context);
         await SeedSiteContentAsync(context);
+        await SeedDiscountsAsync(context);
+    }
+
+    private static async Task SeedDiscountsAsync(AppDbContext context)
+    {
+        if (await context.DiscountPackages.AnyAsync())
+        {
+            return;
+        }
+
+        context.DiscountPackages.AddRange(
+            new DiscountPackage { Name = "Otel + uçuş", Combo = "hotel_flight", Percent = 5, IsActive = true },
+            new DiscountPackage { Name = "Otel + tur", Combo = "hotel_tour", Percent = 7, IsActive = true },
+            new DiscountPackage { Name = "Otel + uçuş + tur", Combo = "hotel_flight_tour", Percent = 10, IsActive = true }
+        );
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedHotelsAsync(AppDbContext context)

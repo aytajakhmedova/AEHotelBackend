@@ -17,4 +17,6 @@ public interface IBookingService
     Task<BookingResponse> UpdateStatusAsync(int id, string status, string userId, bool isAdmin, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default);
+
+    Task<BookingResponse> SendReceiptEmailAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default);
 }

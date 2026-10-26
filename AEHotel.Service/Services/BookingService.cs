@@ -1,9 +1,11 @@
 using AEHotel.Service.Services.Interfaces;
 using AEHotel.Service.DTOs.Bookings;
+using AEHotel.Service.DTOs.Email;
 using AEHotel.Domain.Entities;
 using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Service.Exceptions;
 using AEHotel.Service.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace AEHotel.Service.Services;
 
@@ -24,6 +26,9 @@ public class BookingService : IBookingService
     private readonly IFlightRepository _flights;
     private readonly ITourRepository _tours;
     private readonly ITripSuggestionService _suggestions;
+    private readonly IDiscountService _discounts;
+    private readonly IEmailSender _email;
+    private readonly ILogger<BookingService> _logger;
 
     public BookingService(
         IBookingRepository bookings,
@@ -32,7 +37,10 @@ public class BookingService : IBookingService
         IReservationRepository reservations,
         IFlightRepository flights,
         ITourRepository tours,
-        ITripSuggestionService suggestions)
+        ITripSuggestionService suggestions,
+        IDiscountService discounts,
+        IEmailSender email,
+        ILogger<BookingService> logger)
     {
         _bookings = bookings;
         _hotels = hotels;
@@ -41,6 +49,9 @@ public class BookingService : IBookingService
         _flights = flights;
         _tours = tours;
         _suggestions = suggestions;
+        _discounts = discounts;
+        _email = email;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<BookingResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -110,7 +121,9 @@ public class BookingService : IBookingService
         await _bookings.SaveChangesAsync(cancellationToken);
 
         var saved = await _bookings.GetByIdAsync(booking.Id, tracking: false, cancellationToken);
-        return await MapWithSuggestionsAsync(saved!, cancellationToken);
+        var response = await MapWithSuggestionsAsync(saved!, cancellationToken);
+        response.EmailSent = await TrySendConfirmationAsync(response, cancellationToken);
+        return response;
     }
 
     public async Task<BookingResponse> UpdateAsync(int id, BookingUpdateRequest request, string userId, bool isAdmin, CancellationToken cancellationToken = default)
@@ -171,6 +184,13 @@ public class BookingService : IBookingService
 
         if (next == "cancelled")
         {
+            if (!isAdmin &&
+                booking.CheckIn.HasValue &&
+                booking.CheckIn.Value <= DateOnly.FromDateTime(DateTime.UtcNow.Date))
+            {
+                throw new ValidationException("Check-in günü və ya sonra rezervasiyanı ləğv etmək olmaz.");
+            }
+
             await ReleaseInventoryAsync(booking, cancellationToken);
             if (booking.Payment != null && booking.Payment.Status == "paid")
             {
@@ -191,6 +211,18 @@ public class BookingService : IBookingService
     public async Task DeleteAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default)
     {
         await UpdateStatusAsync(id, "cancelled", userId, isAdmin, cancellationToken);
+    }
+
+    public async Task<BookingResponse> SendReceiptEmailAsync(int id, string userId, bool isAdmin, CancellationToken cancellationToken = default)
+    {
+        var response = await GetByIdAsync(id, userId, isAdmin, cancellationToken);
+        response.EmailSent = await TrySendConfirmationAsync(response, cancellationToken);
+        if (!response.EmailSent)
+        {
+            throw new ValidationException("PDF emailə göndərilmədi. SMTP (Gmail Host, UserName, Password) qurulmalıdır və qonaq email real olmalıdır.");
+        }
+
+        return response;
     }
 
     private static void EnsureCanAccess(Booking booking, string userId, bool isAdmin)
@@ -261,7 +293,7 @@ public class BookingService : IBookingService
         booking.Guests = request.Guests;
         booking.Nights = price.Nights;
         booking.PricePerNight = room.PricePerNight;
-        booking.TotalPrice = price.Total;
+        booking.TotalPrice = await ApplyComboPriceAsync(price.Total, request.BundleCombo, applyAmount: true, cancellationToken);
         booking.ItemName = room.Name;
         booking.Location = hotelTitle;
     }
@@ -287,7 +319,7 @@ public class BookingService : IBookingService
         booking.Guests = request.Guests;
         booking.Nights = 0;
         booking.PricePerNight = flight.Price;
-        booking.TotalPrice = ApplyBundlePrice(flight.Price * request.Guests, request.BundleWithHotel);
+        booking.TotalPrice = await ApplyComboPriceAsync(flight.Price * request.Guests, request.BundleCombo, applyAmount: false, cancellationToken);
         booking.ItemName = $"{flight.Airline} {flight.FlightNumber}";
         booking.Location = $"{flight.OriginCity} ({flight.OriginCode}) - {flight.DestinationCity} ({flight.DestinationCode})";
     }
@@ -324,7 +356,7 @@ public class BookingService : IBookingService
         booking.Guests = request.Guests;
         booking.Nights = 0;
         booking.PricePerNight = tour.Price;
-        booking.TotalPrice = ApplyBundlePrice(tour.Price * request.Guests, request.BundleWithHotel);
+        booking.TotalPrice = await ApplyComboPriceAsync(tour.Price * request.Guests, request.BundleCombo, applyAmount: false, cancellationToken);
         booking.ItemName = tour.Name;
         booking.Location = tour.Destination;
     }
@@ -403,14 +435,25 @@ public class BookingService : IBookingService
         return value;
     }
 
-    private static decimal ApplyBundlePrice(decimal total, bool bundleWithHotel)
+    private async Task<decimal> ApplyComboPriceAsync(decimal total, string? combo, bool applyAmount, CancellationToken cancellationToken)
     {
-        if (!bundleWithHotel)
+        var package = await _discounts.GetActiveByComboAsync(combo, cancellationToken);
+        if (package is null)
         {
             return total;
         }
 
-        return Math.Round(total * 0.9m, 2, MidpointRounding.AwayFromZero);
+        if (package.Percent > 0)
+        {
+            return Math.Round(total * (1 - package.Percent / 100m), 2, MidpointRounding.AwayFromZero);
+        }
+
+        if (applyAmount && package.Amount > 0)
+        {
+            return Math.Max(0, total - package.Amount);
+        }
+
+        return total;
     }
 
     private static string CreateCode()
@@ -433,6 +476,38 @@ public class BookingService : IBookingService
             booking.Guests,
             cancellationToken);
         return response;
+    }
+
+    private async Task<bool> TrySendConfirmationAsync(BookingResponse booking, CancellationToken cancellationToken)
+    {
+        if (!_email.IsConfigured || string.IsNullOrWhiteSpace(booking.GuestEmail))
+        {
+            return false;
+        }
+
+        try
+        {
+            var pdf = BookingReceiptPdf.Build(booking);
+            await _email.SendAsync(
+                booking.GuestEmail,
+                $"AE Hotel rezervasiya təsdiqi {booking.Code}",
+                BookingReceiptHtml.Build(booking),
+                [
+                    new EmailAttachment
+                    {
+                        FileName = $"rezervasiya-{booking.Code}.pdf",
+                        ContentType = "application/pdf",
+                        Content = pdf
+                    }
+                ],
+                cancellationToken);
+            return _email.DeliversToInbox;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Booking confirmation email was not sent for {Code}.", booking.Code);
+            return false;
+        }
     }
 
     private static BookingResponse Map(Booking booking)

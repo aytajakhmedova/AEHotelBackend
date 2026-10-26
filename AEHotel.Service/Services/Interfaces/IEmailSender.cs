@@ -1,8 +1,17 @@
+using AEHotel.Service.DTOs.Email;
+
 namespace AEHotel.Service.Services.Interfaces;
 
 public interface IEmailSender
 {
     bool IsConfigured { get; }
 
-    Task SendAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default);
+    bool DeliversToInbox { get; }
+
+    Task SendAsync(
+        string to,
+        string subject,
+        string htmlBody,
+        IReadOnlyList<EmailAttachment>? attachments = null,
+        CancellationToken cancellationToken = default);
 }

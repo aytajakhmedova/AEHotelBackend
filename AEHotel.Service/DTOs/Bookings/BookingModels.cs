@@ -37,6 +37,8 @@ public class BookingRequest
     public string? CardHolder { get; set; }
 
     public bool BundleWithHotel { get; set; }
+
+    public string? BundleCombo { get; set; }
 }
 
 public class BookingUpdateRequest
@@ -112,6 +114,8 @@ public class BookingResponse
     public int? PaymentId { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public bool EmailSent { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public TripSuggestionResponse? TripSuggestions { get; set; }

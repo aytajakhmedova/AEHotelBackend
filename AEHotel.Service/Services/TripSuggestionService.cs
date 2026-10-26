@@ -66,8 +66,8 @@ public class TripSuggestionService : ITripSuggestionService
             .Concat(outbound)
             .Concat(nearby)
             .Concat(open.OrderBy(flight => flight.Price))
-            .DistinctBy(flight => flight.Id)
-            .Take(Limit)
+            .DistinctBy(flight => flight.FlightNumber)
+            .Take(3)
             .Select(MapFlight)
             .ToList();
     }
@@ -90,7 +90,7 @@ public class TripSuggestionService : ITripSuggestionService
         return matching
             .Concat(fallback)
             .DistinctBy(tour => tour.Id)
-            .Take(Limit)
+            .Take(3)
             .Select(MapTour)
             .ToList();
     }

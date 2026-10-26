@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
     <NuGetAudit>false</NuGetAudit>
+    <UserSecretsId>aehotel-api-dev-email</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

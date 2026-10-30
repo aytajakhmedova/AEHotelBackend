@@ -8,6 +8,8 @@
 
 # Local SMTP pickup emails
 App_Data/email-pickup/
+appsettings.Local.json
+**/appsettings.Local.json
 
 # User-specific files
 *.rsuser

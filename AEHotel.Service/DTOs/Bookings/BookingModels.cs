@@ -36,9 +36,13 @@ public class BookingRequest
 
     public string? CardHolder { get; set; }
 
+    public int? DepositPercent { get; set; }
+
     public bool BundleWithHotel { get; set; }
 
     public string? BundleCombo { get; set; }
+
+    public string? CouponCode { get; set; }
 }
 
 public class BookingUpdateRequest
@@ -101,6 +105,10 @@ public class BookingResponse
 
     public decimal TotalPrice { get; set; }
 
+    public string CouponCode { get; set; } = string.Empty;
+
+    public decimal DiscountAmount { get; set; }
+
     public string ItemName { get; set; } = string.Empty;
 
     public string Location { get; set; } = string.Empty;
@@ -110,6 +118,12 @@ public class BookingResponse
     public string PaymentMethod { get; set; } = string.Empty;
 
     public string PaymentStatus { get; set; } = string.Empty;
+
+    public int DepositPercent { get; set; }
+
+    public decimal DepositAmount { get; set; }
+
+    public decimal RemainingAmount { get; set; }
 
     public int? PaymentId { get; set; }
 

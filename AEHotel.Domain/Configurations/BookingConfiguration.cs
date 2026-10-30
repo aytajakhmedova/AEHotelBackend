@@ -19,6 +19,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         entity.Property(booking => booking.SpecialRequests).HasMaxLength(1000);
         entity.Property(booking => booking.PricePerNight).HasPrecision(18, 2);
         entity.Property(booking => booking.TotalPrice).HasPrecision(18, 2);
+        entity.Property(booking => booking.CouponCode).HasMaxLength(40);
+        entity.Property(booking => booking.DiscountAmount).HasPrecision(18, 2);
         entity.HasIndex(booking => booking.Code).IsUnique();
 
         entity.HasOne(booking => booking.Hotel)

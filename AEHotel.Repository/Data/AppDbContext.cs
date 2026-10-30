@@ -29,5 +29,13 @@ public class AppDbContext : IdentityDbContext<AppUser>
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
+        builder.Entity<StayReview>()
+            .HasIndex(item => item.BookingId)
+            .IsUnique()
+            .HasFilter("[BookingId] IS NOT NULL");
+        builder.Entity<DiscountPackage>()
+            .HasIndex(item => item.Code)
+            .IsUnique()
+            .HasFilter("[Code] IS NOT NULL AND [Code] <> ''");
     }
 }

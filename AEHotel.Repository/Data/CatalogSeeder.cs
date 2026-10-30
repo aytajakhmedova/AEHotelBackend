@@ -20,6 +20,8 @@ public static class CatalogSeeder
         await EnsureCrossSellAsync(context);
         await SeedSiteContentAsync(context);
         await SeedDiscountsAsync(context);
+        await SeedCouponAsync(context);
+        await SeedApprovedReviewsAsync(context);
     }
 
     private static async Task SeedDiscountsAsync(AppDbContext context)
@@ -34,6 +36,24 @@ public static class CatalogSeeder
             new DiscountPackage { Name = "Otel + tur", Combo = "hotel_tour", Percent = 7, IsActive = true },
             new DiscountPackage { Name = "Otel + uçuş + tur", Combo = "hotel_flight_tour", Percent = 10, IsActive = true }
         );
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedCouponAsync(AppDbContext context)
+    {
+        if (await context.DiscountPackages.AnyAsync(item => item.Code == "SAVE10"))
+        {
+            return;
+        }
+
+        context.DiscountPackages.Add(new DiscountPackage
+        {
+            Name = "Kupon 10%",
+            Combo = "coupon",
+            Code = "SAVE10",
+            Percent = 10,
+            IsActive = true
+        });
         await context.SaveChangesAsync();
     }
 
@@ -380,4 +400,86 @@ public static class CatalogSeeder
 
         await context.SaveChangesAsync();
     }
+
+    private static async Task SeedApprovedReviewsAsync(AppDbContext context)
+    {
+        var hotels = await context.Hotels.AsNoTracking().OrderBy(item => item.Id).ToListAsync();
+        if (hotels.Count == 0)
+        {
+            return;
+        }
+
+        var existing = await context.StayReviews.AsNoTracking()
+            .Select(item => new { item.HotelId, item.GuestName })
+            .ToListAsync();
+        var seen = existing
+            .Select(item => $"{item.HotelId}|{item.GuestName}")
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var toAdd = new List<StayReview>();
+        foreach (var hotel in hotels)
+        {
+            foreach (var sample in DisplayReviewsFor(hotel))
+            {
+                var key = $"{hotel.Id}|{sample.GuestName}";
+                if (!seen.Add(key))
+                {
+                    continue;
+                }
+
+                toAdd.Add(new StayReview
+                {
+                    HotelId = hotel.Id,
+                    BookingId = null,
+                    UserId = "catalog-seed",
+                    GuestName = sample.GuestName,
+                    Rating = sample.Rating,
+                    Title = sample.Title,
+                    Comment = sample.Comment,
+                    IsApproved = true,
+                    CreatedAt = sample.CreatedAt
+                });
+            }
+        }
+
+        if (toAdd.Count == 0)
+        {
+            return;
+        }
+
+        context.StayReviews.AddRange(toAdd);
+        await context.SaveChangesAsync();
+    }
+
+    private static IReadOnlyList<(string GuestName, int Rating, string Title, string Comment, DateTime CreatedAt)> DisplayReviewsFor(Hotel hotel)
+    {
+        var title = hotel.Title ?? string.Empty;
+        if (title.Contains("Oasis", StringComparison.OrdinalIgnoreCase))
+        {
+            return OasisReviews;
+        }
+
+        if (title.Contains("Çendu", StringComparison.OrdinalIgnoreCase) ||
+            title.Contains("Cendu", StringComparison.OrdinalIgnoreCase))
+        {
+            return CenduReviews;
+        }
+
+        return [];
+    }
+
+    private static readonly (string GuestName, int Rating, string Title, string Comment, DateTime CreatedAt)[] CenduReviews =
+    [
+        ("Leyla Əliyeva", 5, "Möhtəşəm təcrübə!", "Oteldə qaldığımız müddətdə hər şey mükəmməl idi. Otaqlar çox təmiz, xidmət əla, məkan gözəl. Ailə ilə gəlmişdik və hamı çox razı qaldı. Səhər yeməyi çox zəngin idi, dəniz mənzərəsi əlavə bonus.", DateTime.SpecifyKind(new DateTime(2024, 8, 20), DateTimeKind.Utc)),
+        ("Rəşad Məmmədov", 4, "Çox gözəl otel", "Ümumiyyətlə çox bəyəndik. Otaqlar müasir və rahat. WiFi sürəti yaxşı idi, bu bizim üçün vacib idi. Hovuz sahəsi gözəl dizayn olunub. Restoran yeməkləri dadlı idi.", DateTime.SpecifyKind(new DateTime(2024, 7, 25), DateTimeKind.Utc)),
+        ("Aysel Həsənova", 5, "Ailə üçün ideal", "Uşaqlarla gəlmişdik və hər şey əla idi. Uşaq hovuzu təhlükəsiz və əyləncəli. Animatorlar çox mehriban. Otaqlarda uşaqlar üçün əlavə yataq və ləvazimatlar hazırlamışdılar.", DateTime.SpecifyKind(new DateTime(2024, 6, 15), DateTimeKind.Utc)),
+        ("Cavid Quliyev", 4, "İş səfəri üçün rahat", "İş səfərində qaldım. Otaq rahat idi, iş masası və yaxşı işıqlandırma var. Resepsiyada çox kömək oldular. Yeganə problem parkda yer tapmaq çətinliyi idi.", DateTime.SpecifyKind(new DateTime(2024, 5, 20), DateTimeKind.Utc))
+    ];
+
+    private static readonly (string GuestName, int Rating, string Title, string Comment, DateTime CreatedAt)[] OasisReviews =
+    [
+        ("Nigar Əhmədova", 5, "Lüks və rahatlıq", "Balayı səfərimiz üçün bu oteli seçdik və heç peşman olmadıq. Hər şey lüks və rahat. SPA mərkəzi möhtəşəm idi. Romantik şam yeməyi xidməti unutulmaz oldu.", DateTime.SpecifyKind(new DateTime(2024, 8, 5), DateTimeKind.Utc)),
+        ("Elvin Sultanov", 4, "Yaxşı xidmət", "Qonaqpərvərlik səviyyəsi yüksək. Personal çox diqqətli. Otaqlar geniş. Bazarla yaxın məsafədə olması çox əlverişli.", DateTime.SpecifyKind(new DateTime(2024, 7, 14), DateTimeKind.Utc))
+    ];
+
 }

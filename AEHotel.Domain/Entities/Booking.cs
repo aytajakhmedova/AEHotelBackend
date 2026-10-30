@@ -49,6 +49,10 @@ public class Booking : BaseEntity
 
     public decimal TotalPrice { get; set; }
 
+    public string CouponCode { get; set; } = string.Empty;
+
+    public decimal DiscountAmount { get; set; }
+
     public string ItemName { get; set; } = string.Empty;
 
     public string Location { get; set; } = string.Empty;

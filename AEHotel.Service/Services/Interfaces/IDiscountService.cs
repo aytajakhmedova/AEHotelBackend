@@ -12,6 +12,8 @@ public interface IDiscountService
 
     Task<DiscountPackageResponse?> GetActiveByComboAsync(string? combo, CancellationToken cancellationToken = default);
 
+    Task<DiscountPackageResponse?> GetActiveByCodeAsync(string? code, CancellationToken cancellationToken = default);
+
     Task<DiscountPackageResponse> CreateAsync(DiscountPackageRequest request, CancellationToken cancellationToken = default);
 
     Task<DiscountPackageResponse> UpdateAsync(int id, DiscountPackageRequest request, CancellationToken cancellationToken = default);

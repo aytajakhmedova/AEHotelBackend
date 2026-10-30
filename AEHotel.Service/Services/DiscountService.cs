@@ -8,7 +8,7 @@ namespace AEHotel.Service.Services;
 
 public class DiscountService : IDiscountService
 {
-    public static readonly string[] Combos = ["hotel_flight", "hotel_tour", "hotel_flight_tour"];
+    public static readonly string[] Combos = ["hotel_flight", "hotel_tour", "hotel_flight_tour", "coupon"];
 
     private readonly IDiscountPackageRepository _packages;
 
@@ -38,7 +38,7 @@ public class DiscountService : IDiscountService
     public async Task<decimal> GetActivePercentAsync(string? combo, CancellationToken cancellationToken = default)
     {
         var key = NormalizeCombo(combo);
-        if (key is null)
+        if (key is null || key == "coupon")
         {
             return 0;
         }
@@ -50,7 +50,7 @@ public class DiscountService : IDiscountService
     public async Task<DiscountPackageResponse?> GetActiveByComboAsync(string? combo, CancellationToken cancellationToken = default)
     {
         var key = NormalizeCombo(combo);
-        if (key is null)
+        if (key is null || key == "coupon")
         {
             return null;
         }
@@ -59,10 +59,22 @@ public class DiscountService : IDiscountService
         return package is null ? null : Map(package);
     }
 
+    public async Task<DiscountPackageResponse?> GetActiveByCodeAsync(string? code, CancellationToken cancellationToken = default)
+    {
+        var key = NormalizeCode(code);
+        if (key is null)
+        {
+            return null;
+        }
+
+        var package = await _packages.GetActiveByCodeAsync(key, DateTime.UtcNow, cancellationToken);
+        return package is null ? null : Map(package);
+    }
+
     public async Task<DiscountPackageResponse> CreateAsync(DiscountPackageRequest request, CancellationToken cancellationToken = default)
     {
         var package = new DiscountPackage();
-        Apply(package, request);
+        await ApplyAsync(package, request, excludeId: null, cancellationToken);
         await _packages.AddAsync(package, cancellationToken);
         await _packages.SaveChangesAsync(cancellationToken);
         return Map(package);
@@ -72,7 +84,7 @@ public class DiscountService : IDiscountService
     {
         var package = await _packages.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Discount package with id {id} was not found.");
-        Apply(package, request);
+        await ApplyAsync(package, request, id, cancellationToken);
         await _packages.SaveChangesAsync(cancellationToken);
         return Map(package);
     }
@@ -91,10 +103,19 @@ public class DiscountService : IDiscountService
         return Combos.Contains(value) ? value : null;
     }
 
-    private static void Apply(DiscountPackage package, DiscountPackageRequest request)
+    public static string? NormalizeCode(string? code)
     {
-        var combo = NormalizeCombo(request.Combo)
-            ?? throw new ValidationException("Combo must be hotel_flight, hotel_tour, or hotel_flight_tour.");
+        var value = (code ?? string.Empty).Trim().ToUpperInvariant();
+        if (value.Length is < 3 or > 40)
+        {
+            return null;
+        }
+
+        return value.All(character => char.IsLetterOrDigit(character)) ? value : null;
+    }
+
+    private async Task ApplyAsync(DiscountPackage package, DiscountPackageRequest request, int? excludeId, CancellationToken cancellationToken)
+    {
         if (request.Percent < 0 || request.Percent > 100)
         {
             throw new ValidationException("Percent must be between 0 and 100.");
@@ -105,8 +126,35 @@ public class DiscountService : IDiscountService
             throw new ValidationException("Amount cannot be negative.");
         }
 
-        package.Name = string.IsNullOrWhiteSpace(request.Name) ? combo : request.Name.Trim();
+        var code = string.IsNullOrWhiteSpace(request.Code) ? null : NormalizeCode(request.Code);
+        if (!string.IsNullOrWhiteSpace(request.Code) && code is null)
+        {
+            throw new ValidationException("Kupon kodu 3–40 simvol, yalnız hərf və rəqəm ola bilər.");
+        }
+
+        string combo;
+        if (code != null)
+        {
+            combo = "coupon";
+            var existing = await _packages.GetByCodeAsync(code, tracking: false, cancellationToken);
+            if (existing != null && existing.Id != excludeId)
+            {
+                throw new ValidationException("Bu kupon kodu artıq mövcuddur.");
+            }
+        }
+        else
+        {
+            combo = NormalizeCombo(request.Combo)
+                ?? throw new ValidationException("Combo must be hotel_flight, hotel_tour, hotel_flight_tour, or coupon.");
+            if (combo == "coupon")
+            {
+                throw new ValidationException("Kupon üçün kod yazın.");
+            }
+        }
+
+        package.Name = string.IsNullOrWhiteSpace(request.Name) ? (code ?? combo) : request.Name.Trim();
         package.Combo = combo;
+        package.Code = code;
         package.Percent = request.Percent;
         package.Amount = request.Amount;
         package.StartsAt = request.StartsAt;
@@ -121,6 +169,7 @@ public class DiscountService : IDiscountService
             Id = package.Id,
             Name = package.Name,
             Combo = package.Combo,
+            Code = package.Code,
             Percent = package.Percent,
             Amount = package.Amount,
             StartsAt = package.StartsAt,

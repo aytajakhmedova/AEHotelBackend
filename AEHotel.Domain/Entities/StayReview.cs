@@ -8,7 +8,7 @@ public class StayReview : BaseEntity
 
     public Hotel? Hotel { get; set; }
 
-    public int BookingId { get; set; }
+    public int? BookingId { get; set; }
 
     public Booking? Booking { get; set; }
 
@@ -21,6 +21,8 @@ public class StayReview : BaseEntity
     public string Title { get; set; } = string.Empty;
 
     public string Comment { get; set; } = string.Empty;
+
+    public bool IsApproved { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

@@ -40,4 +40,26 @@ public class DiscountPackageRepository : BaseRepository<DiscountPackage>, IDisco
             .OrderByDescending(item => item.Id)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public Task<DiscountPackage?> GetByCodeAsync(string code, bool tracking, CancellationToken cancellationToken = default)
+    {
+        IQueryable<DiscountPackage> query = Context.DiscountPackages;
+        if (!tracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return query.FirstOrDefaultAsync(item => item.Code == code, cancellationToken);
+    }
+
+    public Task<DiscountPackage?> GetActiveByCodeAsync(string code, DateTime utcNow, CancellationToken cancellationToken = default)
+    {
+        return Context.DiscountPackages
+            .AsNoTracking()
+            .Where(item => item.IsActive && item.Code == code)
+            .Where(item => !item.StartsAt.HasValue || item.StartsAt <= utcNow)
+            .Where(item => !item.EndsAt.HasValue || item.EndsAt >= utcNow)
+            .OrderByDescending(item => item.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

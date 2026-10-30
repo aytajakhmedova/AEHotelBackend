@@ -9,4 +9,8 @@ public interface IDiscountPackageRepository : IBaseRepository<DiscountPackage>
     Task<DiscountPackage?> GetByIdAsync(int id, bool tracking, CancellationToken cancellationToken = default);
 
     Task<DiscountPackage?> GetActiveByComboAsync(string combo, DateTime utcNow, CancellationToken cancellationToken = default);
+
+    Task<DiscountPackage?> GetByCodeAsync(string code, bool tracking, CancellationToken cancellationToken = default);
+
+    Task<DiscountPackage?> GetActiveByCodeAsync(string code, DateTime utcNow, CancellationToken cancellationToken = default);
 }

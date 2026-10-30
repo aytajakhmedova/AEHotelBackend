@@ -1,4 +1,5 @@
 using AEHotel.Service.DTOs.Discounts;
+using AEHotel.Service.Exceptions;
 using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,15 @@ public class DiscountsController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<DiscountPackageResponse>>> GetActive(CancellationToken cancellationToken)
     {
         return Ok(await _discounts.GetActiveAsync(cancellationToken));
+    }
+
+    [HttpGet("coupon/{code}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<DiscountPackageResponse>> GetCoupon(string code, CancellationToken cancellationToken)
+    {
+        var coupon = await _discounts.GetActiveByCodeAsync(code, cancellationToken)
+            ?? throw new NotFoundException("Kupon kodu keçərsizdir və ya müddəti bitib.");
+        return Ok(coupon);
     }
 
     [HttpGet]

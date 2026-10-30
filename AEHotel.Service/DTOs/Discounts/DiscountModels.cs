@@ -6,6 +6,8 @@ public class DiscountPackageRequest
 
     public string Combo { get; set; } = string.Empty;
 
+    public string? Code { get; set; }
+
     public decimal Percent { get; set; }
 
     public decimal Amount { get; set; }
@@ -24,6 +26,8 @@ public class DiscountPackageResponse
     public string Name { get; set; } = string.Empty;
 
     public string Combo { get; set; } = string.Empty;
+
+    public string? Code { get; set; }
 
     public decimal Percent { get; set; }
 

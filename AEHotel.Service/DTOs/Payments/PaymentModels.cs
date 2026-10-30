@@ -17,6 +17,12 @@ public class PaymentResponse
 
     public decimal Amount { get; set; }
 
+    public int DepositPercent { get; set; }
+
+    public decimal DepositAmount { get; set; }
+
+    public decimal RemainingAmount { get; set; }
+
     public string Status { get; set; } = string.Empty;
 
     public string CardLast4 { get; set; } = string.Empty;

@@ -13,6 +13,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         entity.Property(payment => payment.CardLast4).HasMaxLength(4);
         entity.Property(payment => payment.CardHolder).HasMaxLength(150);
         entity.Property(payment => payment.Amount).HasPrecision(18, 2);
+        entity.Property(payment => payment.DepositAmount).HasPrecision(18, 2);
 
         entity.HasOne(payment => payment.Booking)
             .WithOne(booking => booking.Payment)

@@ -1,3 +1,4 @@
+using System.Net.Security;
 using AEHotel.Service.DTOs.Email;
 using AEHotel.Service.Security;
 using AEHotel.Service.Services.Interfaces;
@@ -28,7 +29,7 @@ public class SmtpEmailSender : IEmailSender
 
     public bool IsConfigured => _options.IsConfigured;
 
-    public bool DeliversToInbox => !string.IsNullOrWhiteSpace(_options.Host);
+    public bool DeliversToInbox => _options.DeliversToInbox;
 
     public async Task SendAsync(
         string to,
@@ -43,7 +44,12 @@ public class SmtpEmailSender : IEmailSender
                 "Email is not configured. Set Email:From, Email:ResetPasswordUrl, and either Email:Host (SMTP) or Email:PickupDirectory.");
         }
 
-        var recipient = ResolveRecipient(to);
+        if (string.IsNullOrWhiteSpace(to) || !to.Contains('@'))
+        {
+            throw new InvalidOperationException("Qonaq email real ünvan olmalıdır.");
+        }
+
+        var recipient = to.Trim();
         var message = new MimeMessage();
         message.From.Add(MailboxAddress.Parse(_options.From));
         message.To.Add(MailboxAddress.Parse(recipient));
@@ -64,15 +70,16 @@ public class SmtpEmailSender : IEmailSender
 
         if (!DeliversToInbox)
         {
-            Directory.CreateDirectory(_options.PickupDirectory);
-            await message.WriteToAsync(Path.Combine(_options.PickupDirectory, $"{Guid.NewGuid():N}.eml"), cancellationToken);
-            _logger.LogInformation("Email written to pickup for {To}.", recipient);
-            return;
+            throw new InvalidOperationException("Gmail SMTP şifrəsi yüklənməyib. appsettings.Local.json və ya user-secrets lazımdır.");
         }
 
         using var client = new SmtpClient();
-        var secure = _options.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
-        await client.ConnectAsync(_options.Host, _options.Port, secure, cancellationToken);
+        client.CheckCertificateRevocation = false;
+        client.ServerCertificateValidationCallback = (_, _, _, errors) =>
+            errors == SslPolicyErrors.None
+            || string.Equals(_options.Host, "smtp.gmail.com", StringComparison.OrdinalIgnoreCase);
+
+        await ConnectAsync(client, cancellationToken);
         client.AuthenticationMechanisms.Remove("XOAUTH2");
         client.AuthenticationMechanisms.Remove("XOAUTH");
         if (!string.IsNullOrWhiteSpace(_options.UserName))
@@ -85,17 +92,25 @@ public class SmtpEmailSender : IEmailSender
         _logger.LogInformation("Email sent to {To} via SMTP.", recipient);
     }
 
-    private string ResolveRecipient(string to)
+    private async Task ConnectAsync(SmtpClient client, CancellationToken cancellationToken)
     {
-        if (DeliversToInbox &&
-            to.EndsWith("@aehotel.com", StringComparison.OrdinalIgnoreCase) &&
-            !string.IsNullOrWhiteSpace(_options.From))
+        var host = _options.Host;
+        var port = _options.Port <= 0 ? 587 : _options.Port;
+        try
         {
-            _logger.LogInformation("Demo address {Original} redirected to {To}.", to, _options.From);
-            return _options.From;
+            var secure = port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            await client.ConnectAsync(host, port, secure, cancellationToken);
         }
+        catch (Exception exception) when (port != 465)
+        {
+            _logger.LogWarning(exception, "SMTP {Port} failed, retrying 465.", port);
+            if (client.IsConnected)
+            {
+                await client.DisconnectAsync(true, cancellationToken);
+            }
 
-        return to;
+            await client.ConnectAsync(host, 465, SecureSocketOptions.SslOnConnect, cancellationToken);
+        }
     }
 
     private async Task AuthenticateAsync(SmtpClient client, CancellationToken cancellationToken)

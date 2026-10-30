@@ -22,8 +22,14 @@ public class EmailOptions
 
     public int TokenLifespanHours { get; set; } = 2;
 
+    public bool DeliversToInbox =>
+        !string.IsNullOrWhiteSpace(From)
+        && !string.IsNullOrWhiteSpace(Host)
+        && !string.IsNullOrWhiteSpace(UserName)
+        && !string.IsNullOrWhiteSpace(Password);
+
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(From)
         && !string.IsNullOrWhiteSpace(ResetPasswordUrl)
-        && (!string.IsNullOrWhiteSpace(Host) || !string.IsNullOrWhiteSpace(PickupDirectory));
+        && (DeliversToInbox || !string.IsNullOrWhiteSpace(PickupDirectory));
 }

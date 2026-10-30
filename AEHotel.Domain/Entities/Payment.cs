@@ -13,6 +13,10 @@ public class Payment : BaseEntity
 
     public decimal Amount { get; set; }
 
+    public int DepositPercent { get; set; }
+
+    public decimal DepositAmount { get; set; }
+
     public string Status { get; set; } = "pending";
 
     public string CardLast4 { get; set; } = string.Empty;

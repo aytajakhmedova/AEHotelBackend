@@ -455,6 +455,9 @@ namespace AEHotel.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("CityId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -502,7 +505,14 @@ namespace AEHotel.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int?>("TouristPlaceId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("TouristPlaceId");
 
                     b.ToTable("Hotels");
                 });
@@ -1234,6 +1244,30 @@ namespace AEHotel.Repository.Migrations
                     b.ToTable("Tours");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.TouristPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("TouristPlaces");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -1416,6 +1450,23 @@ namespace AEHotel.Repository.Migrations
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.Hotel", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.City", "CityRecord")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AEHotel.Domain.Entities.TouristPlace", "TouristPlace")
+                        .WithMany()
+                        .HasForeignKey("TouristPlaceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CityRecord");
+
+                    b.Navigation("TouristPlace");
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("AEHotel.Domain.Entities.Booking", "Booking")
@@ -1482,6 +1533,17 @@ namespace AEHotel.Repository.Migrations
                     b.Navigation("Hotel");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.TouristPlace", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.City", "City")
+                        .WithMany("TouristPlaces")
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("City");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1543,6 +1605,11 @@ namespace AEHotel.Repository.Migrations
             modelBuilder.Entity("AEHotel.Domain.Entities.Booking", b =>
                 {
                     b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.City", b =>
+                {
+                    b.Navigation("TouristPlaces");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.Country", b =>

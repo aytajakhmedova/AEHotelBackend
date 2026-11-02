@@ -12,14 +12,14 @@ public class HotelService : IHotelService
     private readonly IHotelRepository _hotels;
     private readonly IBookingRepository _bookings;
     private readonly IReservationRepository _reservations;
-    private readonly ISiteContentService _site;
+    private readonly ILocationRepository _locations;
 
-    public HotelService(IHotelRepository hotels, IBookingRepository bookings, IReservationRepository reservations, ISiteContentService site)
+    public HotelService(IHotelRepository hotels, IBookingRepository bookings, IReservationRepository reservations, ILocationRepository locations)
     {
         _hotels = hotels;
         _bookings = bookings;
         _reservations = reservations;
-        _site = site;
+        _locations = locations;
     }
 
     public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
@@ -48,28 +48,32 @@ public class HotelService : IHotelService
 
     public async Task<HotelResponse> CreateAsync(HotelRequest request, CancellationToken cancellationToken = default)
     {
-        await ValidateAsync(request, cancellationToken);
+        var location = await ValidateAsync(request, cancellationToken);
 
         var hotel = new Hotel();
-        Apply(hotel, request);
+        Apply(hotel, request, location);
         await _hotels.AddAsync(hotel, cancellationToken);
         await _hotels.SaveChangesAsync(cancellationToken);
 
-        return EntityMapper.MapHotel(hotel);
+        var response = EntityMapper.MapHotel(hotel);
+        response.CountryId = location.City.CountryId;
+        return response;
     }
 
     public async Task<HotelResponse> UpdateAsync(int id, HotelRequest request, CancellationToken cancellationToken = default)
     {
-        await ValidateAsync(request, cancellationToken);
+        var location = await ValidateAsync(request, cancellationToken);
 
         var hotel = await _hotels.GetByIdAsync(id, includeRooms: false, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Hotel with id {id} was not found.");
 
-        Apply(hotel, request);
+        Apply(hotel, request, location);
         await _hotels.SaveChangesAsync(cancellationToken);
         await _hotels.LoadRoomsAsync(hotel, cancellationToken);
 
-        return EntityMapper.MapHotel(hotel);
+        var response = EntityMapper.MapHotel(hotel);
+        response.CountryId = location.City.CountryId;
+        return response;
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -110,21 +114,6 @@ public class HotelService : IHotelService
             throw new ValidationException("Hotel title is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.City))
-        {
-            throw new ValidationException("City is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Country))
-        {
-            throw new ValidationException("Country is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Location))
-        {
-            throw new ValidationException("Location (tourist place) is required.");
-        }
-
         if (request.Stars is < 1 or > 5)
         {
             throw new ValidationException("Stars must be between 1 and 5.");
@@ -136,47 +125,56 @@ public class HotelService : IHotelService
         }
     }
 
-    private async Task ValidateAsync(HotelRequest request, CancellationToken cancellationToken)
+    private async Task<(City City, TouristPlace Place)> ValidateAsync(HotelRequest request, CancellationToken cancellationToken)
     {
-        // Basic validation
         Validate(request);
 
-        // Validate country exists
-        var countries = await _site.GetCountriesAsync(cancellationToken);
-        if (!countries.Any(c => c.Equals(request.Country.Trim(), StringComparison.OrdinalIgnoreCase)))
+        if (request.CountryId is not > 0)
         {
-            throw new ValidationException($"Country '{request.Country}' is not valid. Please select from the available countries.");
+            throw new ValidationException("Country is required.");
         }
 
-        // Validate city exists and belongs to selected country
-        var cities = await _site.GetCitiesAsync(cancellationToken);
-        var cityMatch = cities.FirstOrDefault(c => 
-            c.Name.Equals(request.City.Trim(), StringComparison.OrdinalIgnoreCase));
-        
-        if (cityMatch == null)
+        if (request.CityId is not > 0)
         {
-            throw new ValidationException($"City '{request.City}' is not valid. Please select from the available cities.");
+            throw new ValidationException("City is required.");
         }
 
-        if (!cityMatch.Country.Equals(request.Country.Trim(), StringComparison.OrdinalIgnoreCase))
+        if (request.TouristPlaceId is not > 0)
         {
-            throw new ValidationException($"City '{request.City}' does not belong to country '{request.Country}'.");
+            throw new ValidationException("Tourist place is required.");
         }
 
-        // Validate location exists for selected city
-        var locations = await _site.GetLocationsAsync(request.City.Trim(), cancellationToken);
-        if (!locations.Any(l => l.Equals(request.Location.Trim(), StringComparison.OrdinalIgnoreCase)))
+        var country = await _locations.GetCountryAsync(request.CountryId.Value, cancellationToken)
+            ?? throw new ValidationException($"Country with id {request.CountryId} does not exist.");
+
+        var city = await _locations.GetCityAsync(request.CityId.Value, cancellationToken)
+            ?? throw new ValidationException($"City with id {request.CityId} does not exist.");
+        if (city.CountryId != country.Id)
         {
-            throw new ValidationException($"Location '{request.Location}' is not valid for city '{request.City}'. Please select from the available locations.");
+            throw new ValidationException($"City '{city.Name}' does not belong to country '{country.Name}'.");
         }
+
+        var place = await _locations.GetTouristPlaceAsync(request.TouristPlaceId.Value, cancellationToken)
+            ?? throw new ValidationException($"Tourist place with id {request.TouristPlaceId} does not exist.");
+        if (place.CityId != city.Id)
+        {
+            throw new ValidationException($"Tourist place '{place.Name}' does not belong to city '{city.Name}'.");
+        }
+
+        return (city, place);
     }
 
-    private static void Apply(Hotel hotel, HotelRequest request)
+    private static void Apply(Hotel hotel, HotelRequest request, (City City, TouristPlace Place) selected)
     {
         hotel.Title = request.Title.Trim();
-        hotel.City = request.City.Trim();
-        hotel.Country = request.Country.Trim();
-        hotel.Location = request.Location.Trim();
+        hotel.CityId = selected.City.Id;
+        hotel.TouristPlaceId = selected.Place.Id;
+        hotel.CityRecord = null;
+        hotel.TouristPlace = null;
+        // readable copies of the selected names, kept for search and existing clients
+        hotel.City = selected.City.Name;
+        hotel.Country = selected.City.Country?.Name ?? string.Empty;
+        hotel.Location = selected.Place.Name;
         hotel.Address = request.Address.Trim();
         hotel.Stars = request.Stars;
         hotel.Description = request.Description.Trim();

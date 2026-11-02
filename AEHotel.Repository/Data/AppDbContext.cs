@@ -22,6 +22,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<StayReview> StayReviews { get; set; }
     public DbSet<Country> Countries { get; set; }
     public DbSet<City> Cities { get; set; }
+    public DbSet<TouristPlace> TouristPlaces { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

@@ -27,9 +27,39 @@ public static class LocationSeeder
         ("Yaponiya", "JP", ["Tokio", "Kioto", "Osaka"])
     ];
 
+    private static readonly (string City, string[] Places)[] PlaceCatalog =
+    [
+        ("Bakı", ["İçərişəhər", "Alov qüllələri", "Dənizkənarı bulvar", "Qız qalası", "Heydər Əliyev Mərkəzi"]),
+        ("Qəbələ", ["Tufandağ", "Nohur gölü", "Yeddi gözəl şəlaləsi"]),
+        ("Şəki", ["Şəki Xan Sarayı", "Karvansaray", "Kiş məbədi"]),
+        ("Gəncə", ["Nizami Gəncəvi məqbərəsi", "Göygöl"]),
+        ("İstanbul", ["Ayasofya", "Topqapı sarayı", "Qalata qülləsi", "Boğaz"]),
+        ("Antalya", ["Düden şəlaləsi", "Konyaaltı", "Kaleiçi"]),
+        ("Kapadokya", ["Göreme", "Paşabağ vadisi", "Uçhisar qalası"]),
+        ("Dubay", ["Burj Xəlifə", "Dubay Mall", "Palm Jumeirah"]),
+        ("Əbu-Dabi", ["Şeyx Zayed məscidi", "Yas adası"]),
+        ("Paris", ["Eyfel qülləsi", "Luvr", "Monmartr"]),
+        ("Nitsa", ["Promenade des Anglais", "Köhnə Nitsa"]),
+        ("Roma", ["Kolizey", "Vatikan", "Trevi fontanı"]),
+        ("Milan", ["Duomo", "Galleria Vittorio Emanuele II"]),
+        ("London", ["Big Ben", "London Eye", "Tower Bridge"]),
+        ("Berlin", ["Brandenburq qapısı", "Muzey adası"]),
+        ("Barselona", ["Sagrada Familia", "Park Güell"]),
+        ("Madrid", ["Prado muzeyi", "Retiro parkı"]),
+        ("Tbilisi", ["Köhnə Tbilisi", "Narikala qalası"]),
+        ("Batumi", ["Batumi bulvarı", "Alphabetic Tower"]),
+        ("Bangkok", ["Böyük Saray", "Wat Arun"]),
+        ("Phuket", ["Patong çimərliyi", "Phi Phi adaları"]),
+        ("Malé", ["Hulhumalé çimərliyi", "Malé balıq bazarı"]),
+        ("Maafushi", ["Maafushi çimərliyi", "Bikini çimərliyi"])
+    ];
+
     public static async Task SeedAsync(AppDbContext context)
     {
-        var countries = await context.Countries.Include(item => item.Cities).ToListAsync();
+        var countries = await context.Countries
+            .Include(item => item.Cities)
+            .ThenInclude(city => city.TouristPlaces)
+            .ToListAsync();
 
         foreach (var (name, iso, cities) in Catalog)
         {
@@ -62,7 +92,59 @@ public static class LocationSeeder
             }
         }
 
+        foreach (var (cityName, places) in PlaceCatalog)
+        {
+            foreach (var city in countries.SelectMany(item => item.Cities)
+                         .Where(item => string.Equals(item.Name, cityName, StringComparison.OrdinalIgnoreCase)))
+            {
+                foreach (var place in places)
+                {
+                    EnsurePlace(city, place);
+                }
+            }
+        }
+
+        // Hotels already store their tourist place as text (Location); turn it into a row so they can be linked.
+        var hotels = await context.Hotels.Where(item => item.CityId == null || item.TouristPlaceId == null).ToListAsync();
+        foreach (var hotel in hotels)
+        {
+            var city = countries
+                .Where(item => string.Equals(item.Name, hotel.Country, StringComparison.OrdinalIgnoreCase))
+                .SelectMany(item => item.Cities)
+                .FirstOrDefault(item => string.Equals(item.Name, hotel.City, StringComparison.OrdinalIgnoreCase));
+            if (city != null && !string.IsNullOrWhiteSpace(hotel.Location))
+            {
+                EnsurePlace(city, hotel.Location.Trim());
+            }
+        }
+
         await context.SaveChangesAsync();
+
+        foreach (var hotel in hotels)
+        {
+            var city = countries
+                .Where(item => string.Equals(item.Name, hotel.Country, StringComparison.OrdinalIgnoreCase))
+                .SelectMany(item => item.Cities)
+                .FirstOrDefault(item => string.Equals(item.Name, hotel.City, StringComparison.OrdinalIgnoreCase));
+            if (city == null)
+            {
+                continue;
+            }
+
+            hotel.CityId = city.Id;
+            hotel.TouristPlaceId = city.TouristPlaces
+                .FirstOrDefault(item => string.Equals(item.Name, hotel.Location?.Trim(), StringComparison.OrdinalIgnoreCase))?.Id;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static void EnsurePlace(City city, string name)
+    {
+        if (!city.TouristPlaces.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            city.TouristPlaces.Add(new TouristPlace { Name = name });
+        }
     }
 
     private static void EnsurePair(AppDbContext context, List<Country> countries, string? city, string? country)

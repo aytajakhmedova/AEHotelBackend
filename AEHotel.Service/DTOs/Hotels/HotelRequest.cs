@@ -4,11 +4,12 @@ public class HotelRequest
 {
     public string Title { get; set; } = string.Empty;
 
-    public string City { get; set; } = string.Empty;
+    /// <summary>Selected country, city and tourist place. All three are required and checked against each other.</summary>
+    public int? CountryId { get; set; }
 
-    public string Country { get; set; } = string.Empty;
+    public int? CityId { get; set; }
 
-    public string Location { get; set; } = string.Empty;
+    public int? TouristPlaceId { get; set; }
 
     public string Address { get; set; } = string.Empty;
 

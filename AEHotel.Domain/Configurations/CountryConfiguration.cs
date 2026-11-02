@@ -26,3 +26,16 @@ public class CityConfiguration : IEntityTypeConfiguration<City>
         entity.HasIndex(item => new { item.CountryId, item.Name }).IsUnique();
     }
 }
+
+public class TouristPlaceConfiguration : IEntityTypeConfiguration<TouristPlace>
+{
+    public void Configure(EntityTypeBuilder<TouristPlace> entity)
+    {
+        entity.Property(item => item.Name).HasMaxLength(150).IsRequired();
+        entity.HasOne(item => item.City)
+            .WithMany(item => item.TouristPlaces)
+            .HasForeignKey(item => item.CityId)
+            .OnDelete(DeleteBehavior.Cascade);
+        entity.HasIndex(item => new { item.CityId, item.Name }).IsUnique();
+    }
+}

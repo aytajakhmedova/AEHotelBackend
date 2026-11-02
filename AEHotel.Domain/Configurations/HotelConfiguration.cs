@@ -22,5 +22,13 @@ public class HotelConfiguration : IEntityTypeConfiguration<Hotel>
         entity.Property(hotel => hotel.Rating).HasPrecision(3, 1);
         entity.Property(hotel => hotel.ImageFile).HasMaxLength(200);
         entity.Property(hotel => hotel.AmenitiesJson).HasMaxLength(2000);
+        entity.HasOne(hotel => hotel.CityRecord)
+            .WithMany()
+            .HasForeignKey(hotel => hotel.CityId)
+            .OnDelete(DeleteBehavior.Restrict);
+        entity.HasOne(hotel => hotel.TouristPlace)
+            .WithMany()
+            .HasForeignKey(hotel => hotel.TouristPlaceId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -8,6 +8,12 @@ public class HotelResponse
 
     public string Title { get; set; } = string.Empty;
 
+    public int? CountryId { get; set; }
+
+    public int? CityId { get; set; }
+
+    public int? TouristPlaceId { get; set; }
+
     public string City { get; set; } = string.Empty;
 
     public string Country { get; set; } = string.Empty;

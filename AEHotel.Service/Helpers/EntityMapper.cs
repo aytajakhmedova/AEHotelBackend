@@ -12,6 +12,9 @@ internal static class EntityMapper
         {
             Id = hotel.Id,
             Title = hotel.Title,
+            CountryId = hotel.CityRecord?.CountryId,
+            CityId = hotel.CityId,
+            TouristPlaceId = hotel.TouristPlaceId,
             City = hotel.City,
             Country = hotel.Country,
             Location = hotel.Location,

@@ -30,4 +30,40 @@ public class LocationRepository : ILocationRepository
             .OrderBy(item => item.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<City>> GetCitiesByCountryAsync(int countryId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Cities
+            .AsNoTracking()
+            .Where(item => item.CountryId == countryId)
+            .OrderBy(item => item.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TouristPlace>> GetTouristPlacesByCityAsync(int cityId, CancellationToken cancellationToken = default)
+    {
+        return await _context.TouristPlaces
+            .AsNoTracking()
+            .Where(item => item.CityId == cityId)
+            .OrderBy(item => item.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<Country?> GetCountryAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return _context.Countries.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+    }
+
+    public Task<City?> GetCityAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return _context.Cities
+            .AsNoTracking()
+            .Include(item => item.Country)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+    }
+
+    public Task<TouristPlace?> GetTouristPlaceAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return _context.TouristPlaces.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+    }
 }

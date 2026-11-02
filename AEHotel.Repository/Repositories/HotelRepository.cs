@@ -15,6 +15,7 @@ public class HotelRepository : BaseRepository<Hotel>, IHotelRepository
     {
         return await Context.Hotels
             .AsNoTracking()
+            .Include(hotel => hotel.CityRecord)
             .Include(hotel => hotel.Rooms.Where(r => !r.IsDeleted)) // Only include non-deleted rooms
             .Where(hotel => !hotel.IsDeleted) // Filter out deleted hotels
             .OrderBy(hotel => hotel.Id)
@@ -23,7 +24,7 @@ public class HotelRepository : BaseRepository<Hotel>, IHotelRepository
 
     public async Task<Hotel?> GetByIdAsync(int id, bool includeRooms, bool tracking, CancellationToken cancellationToken = default)
     {
-        IQueryable<Hotel> query = Context.Hotels;
+        IQueryable<Hotel> query = Context.Hotels.Include(hotel => hotel.CityRecord);
 
         if (includeRooms)
         {

@@ -9,4 +9,6 @@ public class City : BaseEntity
     public int CountryId { get; set; }
 
     public Country? Country { get; set; }
+
+    public ICollection<TouristPlace> TouristPlaces { get; set; } = new List<TouristPlace>();
 }

@@ -39,6 +39,16 @@ public class Hotel : BaseEntity
 
     public bool IsDeleted { get; set; } = false;
 
+    // Selected through the country > city > tourist place dropdowns. City, Country and Location above
+    // keep a readable copy of the chosen names so search and older clients keep working.
+    public int? CityId { get; set; }
+
+    public City? CityRecord { get; set; }
+
+    public int? TouristPlaceId { get; set; }
+
+    public TouristPlace? TouristPlace { get; set; }
+
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
 
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

@@ -20,6 +20,8 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<SiteAdvantage> SiteAdvantages { get; set; }
     public DbSet<DiscountPackage> DiscountPackages { get; set; }
     public DbSet<StayReview> StayReviews { get; set; }
+    public DbSet<Country> Countries { get; set; }
+    public DbSet<City> Cities { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

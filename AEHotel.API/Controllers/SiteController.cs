@@ -31,6 +31,34 @@ public class SiteController : ControllerBase
         return Ok(await _site.GetCitiesAsync(cancellationToken));
     }
 
+    [HttpGet("countries")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetCountries(CancellationToken cancellationToken)
+    {
+        return Ok(await _site.GetCountriesAsync(cancellationToken));
+    }
+
+    [HttpGet("locations")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetLocations([FromQuery] string? city, CancellationToken cancellationToken)
+    {
+        return Ok(await _site.GetLocationsAsync(city, cancellationToken));
+    }
+
+    [HttpGet("addresses")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetAddresses([FromQuery] string? city, CancellationToken cancellationToken)
+    {
+        return Ok(await _site.GetAddressesAsync(city, cancellationToken));
+    }
+
+    [HttpGet("settings")]
+    [Authorize(Roles = AppRoles.Staff)]
+    public async Task<ActionResult<SiteSettingsResponse>> GetSettings(CancellationToken cancellationToken)
+    {
+        return Ok(await _site.GetSettingsAsync(cancellationToken));
+    }
+
     [HttpPut("settings")]
     [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<SiteSettingsResponse>> UpdateSettings(SiteSettingsRequest request, CancellationToken cancellationToken)

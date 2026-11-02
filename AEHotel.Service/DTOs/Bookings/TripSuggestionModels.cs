@@ -13,3 +13,10 @@ public class TripSuggestionResponse
 
     public IReadOnlyList<TourResponse> Tours { get; set; } = [];
 }
+
+public class TripCountryResponse
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string IsoCode { get; set; } = string.Empty;
+}

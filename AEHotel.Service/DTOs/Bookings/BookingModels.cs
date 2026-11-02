@@ -43,6 +43,9 @@ public class BookingRequest
     public string? BundleCombo { get; set; }
 
     public string? CouponCode { get; set; }
+
+    /// <summary>Country picked on checkout for add-on flights and tours; the selected item must belong to it.</summary>
+    public string? TravelCountry { get; set; }
 }
 
 public class BookingUpdateRequest

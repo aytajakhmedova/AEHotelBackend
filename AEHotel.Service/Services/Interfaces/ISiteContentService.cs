@@ -8,6 +8,14 @@ public interface ISiteContentService
 
     Task<IReadOnlyList<SiteCityResponse>> GetCitiesAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<string>> GetCountriesAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> GetLocationsAsync(string? city = null, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> GetAddressesAsync(string? city = null, CancellationToken cancellationToken = default);
+
+    Task<SiteSettingsResponse> GetSettingsAsync(CancellationToken cancellationToken = default);
+
     Task<SiteSettingsResponse> UpdateSettingsAsync(SiteSettingsRequest request, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<SiteMenuItemResponse>> GetMenuItemsAsync(CancellationToken cancellationToken = default);

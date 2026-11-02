@@ -324,6 +324,12 @@ public class BookingService : IBookingService
         var flight = await _flights.GetByIdAsync(request.FlightId.Value, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Flight with id {request.FlightId} was not found.");
 
+        if (!string.IsNullOrWhiteSpace(request.TravelCountry) &&
+            !TravelCountry.Same(TravelCountry.OfFlight(flight), request.TravelCountry))
+        {
+            throw new ValidationException("Seçilmiş uçuş bu ölkəyə aid deyil.");
+        }
+
         if (flight.SeatsAvailable < request.Guests)
         {
             throw new ValidationException("Not enough seats are left on this flight.");
@@ -349,6 +355,12 @@ public class BookingService : IBookingService
 
         var tour = await _tours.GetByIdAsync(request.TourId.Value, tracking: false, cancellationToken)
             ?? throw new NotFoundException($"Tour with id {request.TourId} was not found.");
+
+        if (!string.IsNullOrWhiteSpace(request.TravelCountry) &&
+            !TravelCountry.Same(TravelCountry.OfTour(tour), request.TravelCountry))
+        {
+            throw new ValidationException("Seçilmiş tur bu ölkəyə aid deyil.");
+        }
 
         if (request.Guests < tour.MinGuests || request.Guests > tour.MaxGuests)
         {
@@ -548,6 +560,7 @@ public class BookingService : IBookingService
 
         response.TripSuggestions = await _suggestions.GetAsync(
             booking.Hotel?.City ?? booking.Location,
+            booking.Hotel?.Country,
             booking.CheckIn,
             booking.CheckOut,
             booking.Guests,

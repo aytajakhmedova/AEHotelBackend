@@ -12,17 +12,20 @@ public class SiteContentService : ISiteContentService
     private readonly IHotelRepository _hotels;
     private readonly IFlightRepository _flights;
     private readonly ITourRepository _tours;
+    private readonly ILocationRepository _locations;
 
     public SiteContentService(
         ISiteContentRepository site,
         IHotelRepository hotels,
         IFlightRepository flights,
-        ITourRepository tours)
+        ITourRepository tours,
+        ILocationRepository locations)
     {
         _site = site;
         _hotels = hotels;
         _flights = flights;
         _tours = tours;
+        _locations = locations;
     }
 
     public async Task<SiteContentResponse> GetPublicAsync(CancellationToken cancellationToken = default)
@@ -48,25 +51,60 @@ public class SiteContentService : ISiteContentService
 
     public async Task<IReadOnlyList<SiteCityResponse>> GetCitiesAsync(CancellationToken cancellationToken = default)
     {
-        var cities = new Dictionary<string, SiteCityResponse>(StringComparer.OrdinalIgnoreCase);
-        foreach (var hotel in await _hotels.GetAllAsync(cancellationToken))
+        return (await _locations.GetCitiesAsync(cancellationToken))
+            .Select(city => new SiteCityResponse
+            {
+                Name = city.Name,
+                Country = city.Country?.Name ?? string.Empty
+            })
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<string>> GetCountriesAsync(CancellationToken cancellationToken = default)
+    {
+        return (await _locations.GetCountriesAsync(cancellationToken))
+            .Select(country => country.Name)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<string>> GetLocationsAsync(string? city = null, CancellationToken cancellationToken = default)
+    {
+        var locations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        var hotels = await _hotels.GetAllAsync(cancellationToken);
+        foreach (var hotel in hotels)
         {
-            AddCity(cities, hotel.City, hotel.Country);
+            if (string.IsNullOrWhiteSpace(city) || hotel.City.Equals(city, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(hotel.Location))
+                    locations.Add(hotel.Location.Trim());
+            }
         }
 
-        foreach (var flight in await _flights.GetAllAsync(cancellationToken))
+        return locations.OrderBy(l => l).ToList();
+    }
+
+    public async Task<IReadOnlyList<string>> GetAddressesAsync(string? city = null, CancellationToken cancellationToken = default)
+    {
+        var addresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        var hotels = await _hotels.GetAllAsync(cancellationToken);
+        foreach (var hotel in hotels)
         {
-            AddCity(cities, flight.OriginCity, flight.OriginCountry);
-            AddCity(cities, flight.DestinationCity, flight.DestinationCountry);
+            if (string.IsNullOrWhiteSpace(city) || hotel.City.Equals(city, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(hotel.Address))
+                    addresses.Add(hotel.Address.Trim());
+            }
         }
 
-        foreach (var tour in await _tours.GetAllAsync(cancellationToken))
-        {
-            var parts = tour.Destination.Split(',', 2, StringSplitOptions.TrimEntries);
-            AddCity(cities, parts[0], parts.Length > 1 ? parts[1] : string.Empty);
-        }
+        return addresses.OrderBy(a => a).ToList();
+    }
 
-        return cities.Values.OrderBy(item => item.Name).ToList();
+    public async Task<SiteSettingsResponse> GetSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await EnsureSettingsAsync(tracking: false, cancellationToken);
+        return MapSettings(settings);
     }
 
     public async Task<SiteSettingsResponse> UpdateSettingsAsync(SiteSettingsRequest request, CancellationToken cancellationToken = default)
@@ -198,19 +236,6 @@ public class SiteContentService : ISiteContentService
         return settings;
     }
 
-    private static void AddCity(IDictionary<string, SiteCityResponse> cities, string name, string country)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return;
-        }
-
-        var key = name.Trim();
-        if (!cities.ContainsKey(key))
-        {
-            cities[key] = new SiteCityResponse { Name = key, Country = country.Trim() };
-        }
-    }
 
     private static void ValidateMenu(SiteMenuItemRequest request)
     {
@@ -312,6 +337,18 @@ public class SiteContentService : ISiteContentService
         settings.FacebookUrl = request.FacebookUrl?.Trim() ?? string.Empty;
         settings.NoticeSummer = request.NoticeSummer?.Trim() ?? string.Empty;
         settings.NoticeSupport = request.NoticeSupport?.Trim() ?? string.Empty;
+        settings.HotelsPageTitle = request.HotelsPageTitle?.Trim() ?? "Otelləri Kəşf Et";
+        settings.HotelsPageSubtitle = request.HotelsPageSubtitle?.Trim() ?? "Lüks qonaq evlərindən tutmuş büdcəli seçimlərə qədər";
+        settings.HotelsPageBannerUrl = request.HotelsPageBannerUrl?.Trim() ?? string.Empty;
+        settings.HotelsPageVideoUrl = request.HotelsPageVideoUrl?.Trim() ?? string.Empty;
+        settings.FlightsPageTitle = request.FlightsPageTitle?.Trim() ?? "Uçuşları Kəşf Et";
+        settings.FlightsPageSubtitle = request.FlightsPageSubtitle?.Trim() ?? "Dünya üzrə ən yaxşı qiymətlərlə uçuşlar";
+        settings.FlightsPageBannerUrl = request.FlightsPageBannerUrl?.Trim() ?? string.Empty;
+        settings.FlightsPageVideoUrl = request.FlightsPageVideoUrl?.Trim() ?? string.Empty;
+        settings.ToursPageTitle = request.ToursPageTitle?.Trim() ?? "Turları Kəşf Et";
+        settings.ToursPageSubtitle = request.ToursPageSubtitle?.Trim() ?? "Azərbaycanın gözəl yerlərini kəşf edin";
+        settings.ToursPageBannerUrl = request.ToursPageBannerUrl?.Trim() ?? string.Empty;
+        settings.ToursPageVideoUrl = request.ToursPageVideoUrl?.Trim() ?? string.Empty;
     }
 
     private static SiteSettingsResponse MapSettings(SiteSettings settings)
@@ -362,7 +399,19 @@ public class SiteContentService : ISiteContentService
             InstagramUrl = settings.InstagramUrl,
             FacebookUrl = settings.FacebookUrl,
             NoticeSummer = settings.NoticeSummer,
-            NoticeSupport = settings.NoticeSupport
+            NoticeSupport = settings.NoticeSupport,
+            HotelsPageTitle = settings.HotelsPageTitle,
+            HotelsPageSubtitle = settings.HotelsPageSubtitle,
+            HotelsPageBannerUrl = settings.HotelsPageBannerUrl,
+            HotelsPageVideoUrl = settings.HotelsPageVideoUrl,
+            FlightsPageTitle = settings.FlightsPageTitle,
+            FlightsPageSubtitle = settings.FlightsPageSubtitle,
+            FlightsPageBannerUrl = settings.FlightsPageBannerUrl,
+            FlightsPageVideoUrl = settings.FlightsPageVideoUrl,
+            ToursPageTitle = settings.ToursPageTitle,
+            ToursPageSubtitle = settings.ToursPageSubtitle,
+            ToursPageBannerUrl = settings.ToursPageBannerUrl,
+            ToursPageVideoUrl = settings.ToursPageVideoUrl
         };
     }
 

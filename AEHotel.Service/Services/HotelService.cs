@@ -12,12 +12,14 @@ public class HotelService : IHotelService
     private readonly IHotelRepository _hotels;
     private readonly IBookingRepository _bookings;
     private readonly IReservationRepository _reservations;
+    private readonly ISiteContentService _site;
 
-    public HotelService(IHotelRepository hotels, IBookingRepository bookings, IReservationRepository reservations)
+    public HotelService(IHotelRepository hotels, IBookingRepository bookings, IReservationRepository reservations, ISiteContentService site)
     {
         _hotels = hotels;
         _bookings = bookings;
         _reservations = reservations;
+        _site = site;
     }
 
     public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
@@ -29,10 +31,8 @@ public class HotelService : IHotelService
             .Select(hotel => EntityMapper.MapHotel(hotel, busyRooms, guests))
             .ToList();
 
-        if (guests.HasValue || (checkIn.HasValue && checkOut.HasValue))
-        {
-            results = results.Where(hotel => hotel.Rooms.Any(room => room.IsAvailable)).ToList();
-        }
+        // Room availability filter disabled - show all hotels
+        // Users can see room availability status in the hotel details
 
         return results;
     }
@@ -48,7 +48,7 @@ public class HotelService : IHotelService
 
     public async Task<HotelResponse> CreateAsync(HotelRequest request, CancellationToken cancellationToken = default)
     {
-        Validate(request);
+        await ValidateAsync(request, cancellationToken);
 
         var hotel = new Hotel();
         Apply(hotel, request);
@@ -60,7 +60,7 @@ public class HotelService : IHotelService
 
     public async Task<HotelResponse> UpdateAsync(int id, HotelRequest request, CancellationToken cancellationToken = default)
     {
-        Validate(request);
+        await ValidateAsync(request, cancellationToken);
 
         var hotel = await _hotels.GetByIdAsync(id, includeRooms: false, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Hotel with id {id} was not found.");
@@ -77,13 +77,15 @@ public class HotelService : IHotelService
         var hotel = await _hotels.GetByIdAsync(id, includeRooms: false, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Hotel with id {id} was not found.");
 
-        if (await _hotels.HasReservationsAsync(id, cancellationToken) ||
-            await _bookings.ExistsForHotelAsync(id, cancellationToken))
+        // Check if already soft deleted
+        if (hotel.IsDeleted)
         {
-            throw new ValidationException("This hotel cannot be deleted because it has reservations.");
+            throw new ValidationException("This hotel has already been deleted.");
         }
 
-        _hotels.Remove(hotel);
+        // SOFT DELETE - Mark as deleted without removing from database
+        hotel.IsDeleted = true;
+        
         await _hotels.SaveChangesAsync(cancellationToken);
     }
 
@@ -118,6 +120,11 @@ public class HotelService : IHotelService
             throw new ValidationException("Country is required.");
         }
 
+        if (string.IsNullOrWhiteSpace(request.Location))
+        {
+            throw new ValidationException("Location (tourist place) is required.");
+        }
+
         if (request.Stars is < 1 or > 5)
         {
             throw new ValidationException("Stars must be between 1 and 5.");
@@ -126,6 +133,41 @@ public class HotelService : IHotelService
         if (request.PricePerNight < 0)
         {
             throw new ValidationException("Price per night cannot be negative.");
+        }
+    }
+
+    private async Task ValidateAsync(HotelRequest request, CancellationToken cancellationToken)
+    {
+        // Basic validation
+        Validate(request);
+
+        // Validate country exists
+        var countries = await _site.GetCountriesAsync(cancellationToken);
+        if (!countries.Any(c => c.Equals(request.Country.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ValidationException($"Country '{request.Country}' is not valid. Please select from the available countries.");
+        }
+
+        // Validate city exists and belongs to selected country
+        var cities = await _site.GetCitiesAsync(cancellationToken);
+        var cityMatch = cities.FirstOrDefault(c => 
+            c.Name.Equals(request.City.Trim(), StringComparison.OrdinalIgnoreCase));
+        
+        if (cityMatch == null)
+        {
+            throw new ValidationException($"City '{request.City}' is not valid. Please select from the available cities.");
+        }
+
+        if (!cityMatch.Country.Equals(request.Country.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException($"City '{request.City}' does not belong to country '{request.Country}'.");
+        }
+
+        // Validate location exists for selected city
+        var locations = await _site.GetLocationsAsync(request.City.Trim(), cancellationToken);
+        if (!locations.Any(l => l.Equals(request.Location.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ValidationException($"Location '{request.Location}' is not valid for city '{request.City}'. Please select from the available locations.");
         }
     }
 

@@ -14,7 +14,7 @@ public interface IRoomService
 
     Task<RoomResponse> UpdateAsync(int id, RoomRequest request, CancellationToken cancellationToken = default);
 
-    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, bool force = false, CancellationToken cancellationToken = default);
 
     Task<RoomQuoteResponse> QuoteAsync(int id, DateOnly checkIn, DateOnly checkOut, int guests, int? excludeBookingId = null, CancellationToken cancellationToken = default);
 }

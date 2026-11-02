@@ -89,6 +89,30 @@ public class SiteSettingsRequest
     public string NoticeSummer { get; set; } = string.Empty;
 
     public string NoticeSupport { get; set; } = string.Empty;
+
+    public string HotelsPageTitle { get; set; } = "Otelləri Kəşf Et";
+
+    public string HotelsPageSubtitle { get; set; } = "Lüks qonaq evlərindən tutmuş büdcəli seçimlərə qədər";
+
+    public string HotelsPageBannerUrl { get; set; } = string.Empty;
+
+    public string HotelsPageVideoUrl { get; set; } = string.Empty;
+
+    public string FlightsPageTitle { get; set; } = "Uçuşları Kəşf Et";
+
+    public string FlightsPageSubtitle { get; set; } = "Dünya üzrə ən yaxşı qiymətlərlə uçuşlar";
+
+    public string FlightsPageBannerUrl { get; set; } = string.Empty;
+
+    public string FlightsPageVideoUrl { get; set; } = string.Empty;
+
+    public string ToursPageTitle { get; set; } = "Turları Kəşf Et";
+
+    public string ToursPageSubtitle { get; set; } = "Azərbaycanın gözəl yerlərini kəşf edin";
+
+    public string ToursPageBannerUrl { get; set; } = string.Empty;
+
+    public string ToursPageVideoUrl { get; set; } = string.Empty;
 }
 
 public class SiteSettingsResponse : SiteSettingsRequest

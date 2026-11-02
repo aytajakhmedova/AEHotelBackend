@@ -10,11 +10,13 @@ public class FlightService : IFlightService
 {
     private readonly IFlightRepository _flights;
     private readonly IBookingRepository _bookings;
+    private readonly ISiteContentService _site;
 
-    public FlightService(IFlightRepository flights, IBookingRepository bookings)
+    public FlightService(IFlightRepository flights, IBookingRepository bookings, ISiteContentService site)
     {
         _flights = flights;
         _bookings = bookings;
+        _site = site;
     }
 
     public async Task<IReadOnlyList<FlightResponse>> GetAllAsync(string? origin, string? destination, DateOnly? date, int? passengers, string? cabin, string? sort, CancellationToken cancellationToken = default)
@@ -36,7 +38,7 @@ public class FlightService : IFlightService
 
     public async Task<FlightResponse> CreateAsync(FlightRequest request, CancellationToken cancellationToken = default)
     {
-        Validate(request);
+        await ValidateAsync(request, cancellationToken);
         var flight = new Flight();
         Apply(flight, request);
         await _flights.AddAsync(flight, cancellationToken);
@@ -46,7 +48,7 @@ public class FlightService : IFlightService
 
     public async Task<FlightResponse> UpdateAsync(int id, FlightRequest request, CancellationToken cancellationToken = default)
     {
-        Validate(request);
+        await ValidateAsync(request, cancellationToken);
         var flight = await _flights.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Flight with id {id} was not found.");
         Apply(flight, request);
@@ -132,6 +134,26 @@ public class FlightService : IFlightService
             throw new ValidationException("Origin and destination are required.");
         }
 
+        if (string.IsNullOrWhiteSpace(request.OriginCity))
+        {
+            throw new ValidationException("Origin city is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.OriginCountry))
+        {
+            throw new ValidationException("Origin country is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.DestinationCity))
+        {
+            throw new ValidationException("Destination city is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.DestinationCountry))
+        {
+            throw new ValidationException("Destination country is required.");
+        }
+
         if (request.ArrivalAt <= request.DepartureAt)
         {
             throw new ValidationException("Arrival must be after departure.");
@@ -140,6 +162,54 @@ public class FlightService : IFlightService
         if (request.Price < 0 || request.SeatsAvailable < 0)
         {
             throw new ValidationException("Price and seats cannot be negative.");
+        }
+    }
+
+    private async Task ValidateAsync(FlightRequest request, CancellationToken cancellationToken)
+    {
+        // Basic validation
+        Validate(request);
+
+        // Validate countries exist
+        var countries = await _site.GetCountriesAsync(cancellationToken);
+        
+        if (!countries.Any(c => c.Equals(request.OriginCountry.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ValidationException($"Origin country '{request.OriginCountry}' is not valid. Please select from the available countries.");
+        }
+
+        if (!countries.Any(c => c.Equals(request.DestinationCountry.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ValidationException($"Destination country '{request.DestinationCountry}' is not valid. Please select from the available countries.");
+        }
+
+        // Validate cities exist and belong to selected countries
+        var cities = await _site.GetCitiesAsync(cancellationToken);
+        
+        var originCityMatch = cities.FirstOrDefault(c => 
+            c.Name.Equals(request.OriginCity.Trim(), StringComparison.OrdinalIgnoreCase));
+        
+        if (originCityMatch == null)
+        {
+            throw new ValidationException($"Origin city '{request.OriginCity}' is not valid. Please select from the available cities.");
+        }
+
+        if (!originCityMatch.Country.Equals(request.OriginCountry.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException($"Origin city '{request.OriginCity}' does not belong to country '{request.OriginCountry}'.");
+        }
+
+        var destinationCityMatch = cities.FirstOrDefault(c => 
+            c.Name.Equals(request.DestinationCity.Trim(), StringComparison.OrdinalIgnoreCase));
+        
+        if (destinationCityMatch == null)
+        {
+            throw new ValidationException($"Destination city '{request.DestinationCity}' is not valid. Please select from the available cities.");
+        }
+
+        if (!destinationCityMatch.Country.Equals(request.DestinationCountry.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException($"Destination city '{request.DestinationCity}' does not belong to country '{request.DestinationCountry}'.");
         }
     }
 

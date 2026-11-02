@@ -73,18 +73,21 @@ public class RoomService : IRoomService
         return await GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, bool force = false, CancellationToken cancellationToken = default)
     {
         var room = await _rooms.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Room with id {id} was not found.");
 
-        if (await _rooms.HasReservationsAsync(id, cancellationToken) ||
-            await _bookings.ExistsForRoomAsync(id, cancellationToken))
+        // Check if already soft deleted
+        if (room.IsDeleted)
         {
-            throw new ValidationException("This room cannot be deleted because it has reservations.");
+            throw new ValidationException("This room has already been deleted.");
         }
 
-        _rooms.Remove(room);
+        // SOFT DELETE - Mark as deleted without removing from database
+        room.IsDeleted = true;
+        room.Available = false; // Make unavailable for new bookings
+        
         await _rooms.SaveChangesAsync(cancellationToken);
     }
 

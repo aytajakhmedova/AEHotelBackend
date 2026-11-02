@@ -16,6 +16,7 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
         return await Context.Rooms
             .AsNoTracking()
             .Include(room => room.Hotel)
+            .Where(room => !room.IsDeleted) // Filter out deleted rooms
             .OrderBy(room => room.Id)
             .ToListAsync(cancellationToken);
     }
@@ -25,7 +26,7 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
         return await Context.Rooms
             .AsNoTracking()
             .Include(room => room.Hotel)
-            .Where(room => room.HotelId == hotelId)
+            .Where(room => room.HotelId == hotelId && !room.IsDeleted) // Filter out deleted rooms
             .OrderBy(room => room.Id)
             .ToListAsync(cancellationToken);
     }

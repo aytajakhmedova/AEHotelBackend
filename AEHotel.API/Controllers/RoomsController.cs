@@ -83,11 +83,11 @@ public class RoomsController : ControllerBase
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = AppRoles.CatalogEditors)]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
         var room = await _roomService.GetByIdAsync(id, cancellationToken);
         User.EnsureHotelScope(room.HotelId);
-        await _roomService.DeleteAsync(id, cancellationToken);
+        await _roomService.DeleteAsync(id, false, cancellationToken);
         return NoContent();
     }
 }

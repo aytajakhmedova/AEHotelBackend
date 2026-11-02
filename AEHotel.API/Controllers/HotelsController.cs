@@ -37,6 +37,25 @@ public class HotelsController : ControllerBase
         return Ok(hotels);
     }
 
+    [HttpGet("debug")]
+    [AllowAnonymous]
+    public async Task<ActionResult> GetAllDebug(CancellationToken cancellationToken)
+    {
+        var hotels = await _hotelService.GetAllAsync(null, null, null, null, cancellationToken);
+        return Ok(new
+        {
+            totalCount = hotels.Count,
+            hotels = hotels.Select(h => new
+            {
+                h.Id,
+                h.Title,
+                h.City,
+                roomCount = h.Rooms.Count,
+                hasAvailableRooms = h.Rooms.Any(r => r.IsAvailable)
+            })
+        });
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<HotelResponse>> GetById(
         int id,

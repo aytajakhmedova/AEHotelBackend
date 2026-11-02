@@ -29,5 +29,7 @@ public class Room : BaseEntity
 
     public string AmenitiesJson { get; set; } = "[]";
 
+    public bool IsDeleted { get; set; } = false;
+
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }

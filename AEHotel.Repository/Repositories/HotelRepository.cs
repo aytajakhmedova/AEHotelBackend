@@ -15,7 +15,8 @@ public class HotelRepository : BaseRepository<Hotel>, IHotelRepository
     {
         return await Context.Hotels
             .AsNoTracking()
-            .Include(hotel => hotel.Rooms)
+            .Include(hotel => hotel.Rooms.Where(r => !r.IsDeleted)) // Only include non-deleted rooms
+            .Where(hotel => !hotel.IsDeleted) // Filter out deleted hotels
             .OrderBy(hotel => hotel.Id)
             .ToListAsync(cancellationToken);
     }

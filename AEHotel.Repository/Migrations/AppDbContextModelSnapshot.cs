@@ -468,6 +468,11 @@ namespace AEHotel.Repository.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
+                    b.Property<string>("GalleryJson")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("HotelType")
                         .IsRequired()
                         .HasMaxLength(100)

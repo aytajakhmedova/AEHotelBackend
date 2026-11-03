@@ -1,3 +1,5 @@
+using AEHotel.Repository.Data;
+using Microsoft.EntityFrameworkCore;
 using AEHotel.Domain.Entities;
 using AEHotel.Service.Security;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +24,8 @@ public static class IdentitySeeder
         }
 
         var users = services.GetRequiredService<UserManager<AppUser>>();
+        var db = services.GetRequiredService<AppDbContext>();
+        var activeHotelIds = await db.Hotels.Where(hotel => !hotel.IsDeleted).OrderBy(hotel => hotel.Id).Select(hotel => hotel.Id).ToListAsync();
 
         await EnsureUserAsync(
             users,
@@ -29,7 +33,8 @@ public static class IdentitySeeder
             configuration["SeedAdmin:Password"],
             configuration["SeedAdmin:Name"] ?? "Admin",
             "User",
-            AppRoles.Admin);
+            AppRoles.Admin,
+            activeHotelIds: activeHotelIds);
 
         var extras = configuration.GetSection("SeedUsers").Get<SeedAccount[]>() ?? [];
         foreach (var account in extras)
@@ -41,7 +46,8 @@ public static class IdentitySeeder
                 account.Name,
                 account.Surname,
                 account.Role,
-                account.AssignedHotelId);
+                account.AssignedHotelId,
+                activeHotelIds);
         }
     }
 
@@ -52,7 +58,8 @@ public static class IdentitySeeder
         string? name,
         string? surname,
         string? role,
-        int? assignedHotelId = null)
+        int? assignedHotelId = null,
+        IReadOnlyList<int>? activeHotelIds = null)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(role))
         {
@@ -87,10 +94,16 @@ public static class IdentitySeeder
             await users.AddToRoleAsync(user, role);
         }
 
-        if (assignedHotelId.HasValue && user.AssignedHotelId != assignedHotelId)
+        // A seeded staff account keeps the hotel an admin gave it. The configured hotel is only applied when the
+        // account has none, or its hotel no longer exists (ids change when the catalog is reseeded).
+        if (assignedHotelId.HasValue && activeHotelIds is { Count: > 0 })
         {
-            user.AssignedHotelId = assignedHotelId;
-            await users.UpdateAsync(user);
+            var currentIsValid = user.AssignedHotelId.HasValue && activeHotelIds.Contains(user.AssignedHotelId.Value);
+            if (!currentIsValid)
+            {
+                user.AssignedHotelId = activeHotelIds.Contains(assignedHotelId.Value) ? assignedHotelId.Value : activeHotelIds[0];
+                await users.UpdateAsync(user);
+            }
         }
     }
 

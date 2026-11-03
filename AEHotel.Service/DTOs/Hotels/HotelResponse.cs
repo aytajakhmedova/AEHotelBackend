@@ -42,6 +42,8 @@ public class HotelResponse
 
     public string ImageFile { get; set; } = string.Empty;
 
+    public IReadOnlyList<string> GalleryImages { get; set; } = [];
+
     public IReadOnlyList<string> Amenities { get; set; } = [];
 
     public IReadOnlyList<RoomResponse> Rooms { get; set; } = [];

@@ -21,6 +21,7 @@ public class HotelConfiguration : IEntityTypeConfiguration<Hotel>
         entity.Property(hotel => hotel.PricePerNight).HasPrecision(18, 2);
         entity.Property(hotel => hotel.Rating).HasPrecision(3, 1);
         entity.Property(hotel => hotel.ImageFile).HasMaxLength(200);
+        entity.Property(hotel => hotel.GalleryJson).HasMaxLength(1000);
         entity.Property(hotel => hotel.AmenitiesJson).HasMaxLength(2000);
         entity.HasOne(hotel => hotel.CityRecord)
             .WithMany()

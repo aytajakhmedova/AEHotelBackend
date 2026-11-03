@@ -90,10 +90,9 @@ public class HotelsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = AppRoles.CatalogEditors)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        User.EnsureHotelScope(id);
         await _hotelService.DeleteAsync(id, cancellationToken);
         return NoContent();
     }

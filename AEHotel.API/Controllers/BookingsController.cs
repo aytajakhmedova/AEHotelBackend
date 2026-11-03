@@ -42,10 +42,28 @@ public class BookingsController : ControllerBase
         return Ok(await _bookingService.GetMineAsync(User.GetRequiredUserId(), bookingType, cancellationToken));
     }
 
+    // Hotel managers and receptionists act as staff only on bookings of their own hotel; on any other booking
+    // they are treated like a guest, so only a booking they made themselves is visible.
+    private async Task<bool> HasStaffAccessAsync(int bookingId, CancellationToken cancellationToken)
+    {
+        if (!User.IsAdmin())
+        {
+            return false;
+        }
+
+        if (!User.TryGetHotelScope(out var scopedHotelId))
+        {
+            return true;
+        }
+
+        var booking = await _bookingService.GetByIdAsync(bookingId, User.GetRequiredUserId(), true, cancellationToken);
+        return scopedHotelId > 0 && booking.HotelId == scopedHotelId;
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<BookingResponse>> GetById(int id, CancellationToken cancellationToken)
     {
-        return Ok(await _bookingService.GetByIdAsync(id, User.GetRequiredUserId(), User.IsAdmin(), cancellationToken));
+        return Ok(await _bookingService.GetByIdAsync(id, User.GetRequiredUserId(), await HasStaffAccessAsync(id, cancellationToken), cancellationToken));
     }
 
     [HttpPost]
@@ -58,7 +76,7 @@ public class BookingsController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<BookingResponse>> Update(int id, BookingUpdateRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await _bookingService.UpdateAsync(id, request, User.GetRequiredUserId(), User.IsAdmin(), cancellationToken));
+        return Ok(await _bookingService.UpdateAsync(id, request, User.GetRequiredUserId(), await HasStaffAccessAsync(id, cancellationToken), cancellationToken));
     }
 
     [HttpPut("{id:int}/status")]
@@ -73,20 +91,20 @@ public class BookingsController : ControllerBase
     [HttpGet("{id:int}/receipt")]
     public async Task<IActionResult> Receipt(int id, CancellationToken cancellationToken)
     {
-        var booking = await _bookingService.GetByIdAsync(id, User.GetRequiredUserId(), User.IsAdmin(), cancellationToken);
+        var booking = await _bookingService.GetByIdAsync(id, User.GetRequiredUserId(), await HasStaffAccessAsync(id, cancellationToken), cancellationToken);
         return Content(BookingReceiptHtml.Build(booking), "text/html; charset=utf-8");
     }
 
     [HttpPost("{id:int}/email-receipt")]
     public async Task<ActionResult<BookingResponse>> EmailReceipt(int id, CancellationToken cancellationToken)
     {
-        return Ok(await _bookingService.SendReceiptEmailAsync(id, User.GetRequiredUserId(), User.IsAdmin(), cancellationToken));
+        return Ok(await _bookingService.SendReceiptEmailAsync(id, User.GetRequiredUserId(), await HasStaffAccessAsync(id, cancellationToken), cancellationToken));
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        await _bookingService.DeleteAsync(id, User.GetRequiredUserId(), User.IsAdmin(), cancellationToken);
+        await _bookingService.DeleteAsync(id, User.GetRequiredUserId(), await HasStaffAccessAsync(id, cancellationToken), cancellationToken);
         return NoContent();
     }
 }

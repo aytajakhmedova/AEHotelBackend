@@ -29,6 +29,7 @@ internal static class EntityMapper
             CheckOutTime = hotel.CheckOutTime,
             CancellationPolicy = hotel.CancellationPolicy,
             ImageFile = hotel.ImageFile,
+            GalleryImages = JsonLists.ReadStrings(hotel.GalleryJson),
             Amenities = JsonLists.ReadStrings(hotel.AmenitiesJson),
             Rooms = hotel.Rooms.Select(room => MapRoom(room, IsRoomOpen(room, busyRoomIds, guests))).ToList()
         };

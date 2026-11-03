@@ -35,6 +35,9 @@ public class Hotel : BaseEntity
 
     public string ImageFile { get; set; } = string.Empty;
 
+    // Up to three different photo file names shown in the hotel gallery (first one is the card photo).
+    public string GalleryJson { get; set; } = "[]";
+
     public string AmenitiesJson { get; set; } = "[]";
 
     public bool IsDeleted { get; set; } = false;

@@ -169,8 +169,6 @@ public class HotelService : IHotelService
         hotel.Title = request.Title.Trim();
         hotel.CityId = selected.City.Id;
         hotel.TouristPlaceId = selected.Place.Id;
-        hotel.CityRecord = null;
-        hotel.TouristPlace = null;
         // readable copies of the selected names, kept for search and existing clients
         hotel.City = selected.City.Name;
         hotel.Country = selected.City.Country?.Name ?? string.Empty;
@@ -186,6 +184,15 @@ public class HotelService : IHotelService
             ? "Check-in tarixindən əvvəl ləğv etmək olar."
             : request.CancellationPolicy.Trim();
         hotel.ImageFile = request.ImageFile.Trim();
+        if (request.GalleryImages is not null)
+        {
+            var gallery = request.GalleryImages
+                .Select(file => file.Trim())
+                .Where(file => file.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(3);
+            hotel.GalleryJson = JsonLists.WriteStrings(gallery);
+        }
         hotel.AmenitiesJson = JsonLists.WriteStrings(request.Amenities);
     }
 

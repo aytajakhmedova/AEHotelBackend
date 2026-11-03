@@ -29,5 +29,8 @@ public class HotelRequest
 
     public string ImageFile { get; set; } = string.Empty;
 
+    // null keeps the saved gallery; a list replaces it.
+    public List<string>? GalleryImages { get; set; }
+
     public List<string> Amenities { get; set; } = [];
 }

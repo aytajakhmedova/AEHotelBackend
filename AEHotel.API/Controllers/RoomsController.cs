@@ -63,6 +63,9 @@ public class RoomsController : ControllerBase
     [Authorize(Roles = AppRoles.CatalogEditors)]
     public async Task<ActionResult<RoomResponse>> Update(int id, RoomRequest request, CancellationToken cancellationToken)
     {
+        // both the room being edited and the hotel it is sent to must belong to the manager
+        var existing = await _roomService.GetByIdAsync(id, cancellationToken);
+        User.EnsureHotelScope(existing.HotelId);
         User.EnsureHotelScope(request.HotelId);
         var updated = await _roomService.UpdateAsync(id, request, cancellationToken);
         return Ok(updated);

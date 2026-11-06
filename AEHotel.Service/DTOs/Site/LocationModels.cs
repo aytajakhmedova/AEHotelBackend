@@ -26,3 +26,6 @@ public class TouristPlaceOptionResponse
 
     public int CityId { get; set; }
 }
+
+public record CountryRequest(string Name, string? IsoCode);
+public record CityRequest(string Name, int CountryId);

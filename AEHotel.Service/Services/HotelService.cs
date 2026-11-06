@@ -22,28 +22,31 @@ public class HotelService : IHotelService
         _locations = locations;
     }
 
-    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null)
     {
         var hotels = await _hotels.GetAllAsync(cancellationToken);
         var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
+        var party = StayParty.From(adults, children, rooms, guests);
+        var searching = checkIn.HasValue || rooms.HasValue || adults.HasValue || guests.HasValue;
         var results = hotels
             .Where(hotel => MatchesCity(hotel, city))
-            .Select(hotel => EntityMapper.MapHotel(hotel, busyRooms, guests))
+            .Where(hotel => string.IsNullOrWhiteSpace(country) || string.Equals(hotel.Country, country.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Select(hotel => MapStay(hotel, busyRooms, party, searching))
+            .Where(hotel => !searching || hotel.Rooms.Count > 0)
             .ToList();
-
-        // Room availability filter disabled - show all hotels
-        // Users can see room availability status in the hotel details
 
         return results;
     }
 
-    public async Task<HotelResponse> GetByIdAsync(int id, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default)
+    public async Task<HotelResponse> GetByIdAsync(int id, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null)
     {
         var hotel = await _hotels.GetByIdAsync(id, includeRooms: true, tracking: false, cancellationToken)
             ?? throw new NotFoundException($"Hotel with id {id} was not found.");
 
         var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
-        return EntityMapper.MapHotel(hotel, busyRooms, guests);
+        if (hotel.IsDeleted) throw new NotFoundException("Hotel was not found.");
+        return MapStay(hotel, busyRooms, StayParty.From(adults, children, rooms, guests),
+            checkIn.HasValue || rooms.HasValue || adults.HasValue || guests.HasValue);
     }
 
     public async Task<HotelResponse> CreateAsync(HotelRequest request, CancellationToken cancellationToken = default)
@@ -91,6 +94,21 @@ public class HotelService : IHotelService
         hotel.IsDeleted = true;
         
         await _hotels.SaveChangesAsync(cancellationToken);
+    }
+
+    private static HotelResponse MapStay(Hotel hotel, IReadOnlySet<int>? busy, StayParty party, bool searching)
+    {
+        var result = EntityMapper.MapHotel(hotel, busy);
+        if (!searching) return result;
+        var open = result.Rooms.Where(r => r.IsAvailable && r.Capacity > 0)
+            .OrderByDescending(r => r.Capacity).ThenBy(r => r.Id).ToList();
+        var largest = open.Take(party.Rooms).ToList();
+        long capacity = largest.Sum(r => (long)r.Capacity);
+        if (largest.Count < party.Rooms || capacity < party.Guests)
+            result.Rooms = [];
+        else
+            result.Rooms = open.Where(r => capacity - largest[^1].Capacity + r.Capacity >= party.Guests).ToList();
+        return result;
     }
 
     private static bool MatchesCity(Hotel hotel, string? city)
@@ -198,7 +216,9 @@ public class HotelService : IHotelService
 
     private async Task<IReadOnlySet<int>?> GetBusyRoomsAsync(DateOnly? checkIn, DateOnly? checkOut, CancellationToken cancellationToken)
     {
-        if (!checkIn.HasValue || !checkOut.HasValue || checkOut <= checkIn)
+        if (checkIn.HasValue != checkOut.HasValue || checkOut <= checkIn)
+            throw new ValidationException("Supply both stay dates, with check-out after check-in.");
+        if (!checkIn.HasValue || !checkOut.HasValue)
         {
             return null;
         }

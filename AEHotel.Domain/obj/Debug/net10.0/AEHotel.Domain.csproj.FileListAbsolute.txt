@@ -1,0 +1,41 @@
+C:\Windows\Temp\aehotel-out\AEHotel.Domain.deps.json
+C:\Windows\Temp\aehotel-out\AEHotel.Domain.dll
+C:\Windows\Temp\aehotel-out\AEHotel.Domain.pdb
+C:\Windows\Temp\aehotel-hotelroom\AEHotel.Domain.deps.json
+C:\Windows\Temp\aehotel-hotelroom\AEHotel.Domain.dll
+C:\Windows\Temp\aehotel-hotelroom\AEHotel.Domain.pdb
+C:\Users\Public\aehotel-out\AEHotel.Domain.deps.json
+C:\Users\Public\aehotel-out\AEHotel.Domain.dll
+C:\Users\Public\aehotel-out\AEHotel.Domain.pdb
+Z:\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.deps.json
+Z:\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.dll
+Z:\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.pdb
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.csproj.AssemblyReference.cache
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.GeneratedMSBuildEditorConfig.editorconfig
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.AssemblyInfoInputs.cache
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.AssemblyInfo.cs
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.csproj.CoreCompileInputs.cache
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.sourcelink.json
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.dll
+Z:\AEHotel.Domain\obj\Debug\net10.0\refint\AEHotel.Domain.dll
+Z:\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.pdb
+Z:\AEHotel.Domain\obj\Debug\net10.0\ref\AEHotel.Domain.dll
+Z:\AEHotel.API\bin\run5080\AEHotel.Domain.deps.json
+Z:\AEHotel.API\bin\run5080\AEHotel.Domain.dll
+Z:\AEHotel.API\bin\run5080\AEHotel.Domain.pdb
+C:\tmp\apiout\AEHotel.Domain.deps.json
+C:\tmp\apiout\AEHotel.Domain.dll
+C:\tmp\apiout\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.deps.json
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.csproj.AssemblyReference.cache
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.AssemblyInfoInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.AssemblyInfo.cs
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.sourcelink.json
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\refint\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\ref\AEHotel.Domain.dll

@@ -239,6 +239,36 @@ namespace AEHotel.Repository.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.BookingRoom", b =>
+                {
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Adults")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Children")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PricePerNight")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("BookingId", "RoomId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("BookingRooms", (string)null);
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.City", b =>
                 {
                     b.Property<int>("Id")
@@ -1454,6 +1484,21 @@ namespace AEHotel.Repository.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.BookingRoom", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.Booking", null)
+                        .WithMany("Rooms")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AEHotel.Domain.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.City", b =>
                 {
                     b.HasOne("AEHotel.Domain.Entities.Country", "Country")
@@ -1620,6 +1665,8 @@ namespace AEHotel.Repository.Migrations
             modelBuilder.Entity("AEHotel.Domain.Entities.Booking", b =>
                 {
                     b.Navigation("Payment");
+
+                    b.Navigation("Rooms");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.City", b =>

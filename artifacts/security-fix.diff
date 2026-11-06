@@ -1,0 +1,1166 @@
+diff --git a/backend/AEHotel.sln b/backend/AEHotel.sln
+index 82177e2..13351a0 100644
+--- a/backend/AEHotel.sln
++++ b/backend/AEHotel.sln
+@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.Repository", "AEHot
+ EndProject
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.Service", "AEHotel.Service\AEHotel.Service.csproj", "{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}"
+ EndProject
++Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEHotel.SecurityTests", "AEHotel.SecurityTests\AEHotel.SecurityTests.csproj", "{0B442EE1-3631-41F7-BD09-4DAADD34A60E}"
++EndProject
+ Global
+ 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+ 		Debug|Any CPU = Debug|Any CPU
+@@ -69,6 +71,18 @@ Global
+ 		{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}.Release|x64.Build.0 = Release|Any CPU
+ 		{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}.Release|x86.ActiveCfg = Release|Any CPU
+ 		{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}.Release|x86.Build.0 = Release|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Debug|x64.ActiveCfg = Debug|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Debug|x64.Build.0 = Debug|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Debug|x86.ActiveCfg = Debug|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Debug|x86.Build.0 = Debug|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Release|Any CPU.Build.0 = Release|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Release|x64.ActiveCfg = Release|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Release|x64.Build.0 = Release|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Release|x86.ActiveCfg = Release|Any CPU
++		{0B442EE1-3631-41F7-BD09-4DAADD34A60E}.Release|x86.Build.0 = Release|Any CPU
+ 	EndGlobalSection
+ 	GlobalSection(SolutionProperties) = preSolution
+ 		HideSolutionNode = FALSE
+diff --git a/backend/AEHotel.API/Controllers/UsersController.cs b/backend/AEHotel.API/Controllers/UsersController.cs
+index f23bc1b..9459043 100644
+--- a/backend/AEHotel.API/Controllers/UsersController.cs
++++ b/backend/AEHotel.API/Controllers/UsersController.cs
+@@ -1,4 +1,7 @@
++using System.Data;
++using AEHotel.API.Security;
+ using AEHotel.Domain.Entities;
++using AEHotel.Repository.Data;
+ using AEHotel.Service.DTOs.Users;
+ using AEHotel.Service.Exceptions;
+ using AEHotel.Service.Security;
+@@ -26,10 +29,14 @@ public class UsersController : ControllerBase
+     ];
+ 
+     private readonly UserManager<AppUser> _users;
++    private readonly AppDbContext _db;
++    private readonly UserManagementPolicy _management;
+ 
+-    public UsersController(UserManager<AppUser> users)
++    public UsersController(UserManager<AppUser> users, AppDbContext db, UserManagementPolicy management)
+     {
+         _users = users;
++        _db = db;
++        _management = management;
+     }
+ 
+     [HttpGet]
+@@ -56,6 +63,13 @@ public class UsersController : ControllerBase
+     [HttpPut("{id}/role")]
+     public async Task<ActionResult<UserAdminResponse>> UpdateRole(string id, UserRoleRequest request, CancellationToken cancellationToken)
+     {
++        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
++        var user = await _users.FindByIdAsync(id)
++            ?? throw new NotFoundException("User was not found.");
++        var current = await _users.GetRolesAsync(user);
++        var actorId = User.GetRequiredUserId();
++        await _management.EnsureCanManageAsync(actorId, current);
++
+         var role = (request.Role ?? string.Empty).Trim();
+         if (!AssignableRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+         {
+@@ -64,36 +78,30 @@ public class UsersController : ControllerBase
+ 
+         var normalizedRole = AssignableRoles.First(item => item.Equals(role, StringComparison.OrdinalIgnoreCase));
+ 
+-        // Only SuperAdmin can assign SuperAdmin role
+-        if (normalizedRole == AppRoles.SuperAdmin && !User.IsInRole(AppRoles.SuperAdmin))
++        await _management.EnsureCanManageAsync(actorId, current, normalizedRole);
++        if (id == actorId && !current.Contains(normalizedRole))
+         {
+-            throw new ValidationException("Only SuperAdmin can assign the SuperAdmin role.");
++            throw new ForbiddenException("You cannot change the role of your own account.");
+         }
+ 
+-        var user = await _users.FindByIdAsync(id)
+-            ?? throw new NotFoundException("User was not found.");
+-
+-        var current = await _users.GetRolesAsync(user);
++        await _management.EnsureAnotherSuperAdminAsync(user, current, normalizedRole, !user.IsRestricted);
+ 
+-        // Only SuperAdmin can remove SuperAdmin role from a user
+-        if (current.Contains(AppRoles.SuperAdmin) && normalizedRole != AppRoles.SuperAdmin && !User.IsInRole(AppRoles.SuperAdmin))
++        if (!current.Contains(normalizedRole) || current.Count != 1)
+         {
+-            throw new ValidationException("Only SuperAdmin can change the role of another SuperAdmin.");
+-        }
+-
+-        if (current.Count > 0)
+-        {
+-            var removeResult = await _users.RemoveFromRolesAsync(user, current);
+-            if (!removeResult.Succeeded)
++            if (current.Count > 0)
+             {
+-                throw new ValidationException($"Failed to remove existing roles: {string.Join(", ", removeResult.Errors.Select(e => e.Description))}");
++                var removeResult = await _users.RemoveFromRolesAsync(user, current);
++                if (!removeResult.Succeeded)
++                {
++                    throw new ValidationException($"Failed to remove existing roles: {string.Join(", ", removeResult.Errors.Select(e => e.Description))}");
++                }
+             }
+-        }
+ 
+-        var addResult = await _users.AddToRoleAsync(user, normalizedRole);
+-        if (!addResult.Succeeded)
+-        {
+-            throw new ValidationException($"Failed to assign new role: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
++            var addResult = await _users.AddToRoleAsync(user, normalizedRole);
++            if (!addResult.Succeeded)
++            {
++                throw new ValidationException($"Failed to assign new role: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
++            }
+         }
+ 
+         user.AssignedHotelId = normalizedRole is AppRoles.HotelManager or AppRoles.Receptionist
+@@ -106,7 +114,7 @@ public class UsersController : ControllerBase
+             throw new ValidationException($"Failed to update user: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+         }
+ 
+-        return Ok(new UserAdminResponse
++        var response = new UserAdminResponse
+         {
+             Id = user.Id,
+             Email = user.Email ?? string.Empty,
+@@ -114,6 +122,8 @@ public class UsersController : ControllerBase
+             Roles = (await _users.GetRolesAsync(user)).ToList(),
+             AssignedHotelId = user.AssignedHotelId,
+             CreatedAt = user.CreatedAt
+-        });
++        };
++        await transaction.CommitAsync(cancellationToken);
++        return Ok(response);
+     }
+ }
+diff --git a/backend/AEHotel.API/Controllers/AdminController.cs b/backend/AEHotel.API/Controllers/AdminController.cs
+index 835917f..38d93ac 100644
+--- a/backend/AEHotel.API/Controllers/AdminController.cs
++++ b/backend/AEHotel.API/Controllers/AdminController.cs
+@@ -41,7 +41,7 @@ public class AdminController : ControllerBase
+     [HttpPost("staff")]
+     public async Task<ActionResult<StaffResponse>> CreateStaff(StaffRequest request, CancellationToken cancellationToken)
+     {
+-        return StatusCode(StatusCodes.Status201Created, await _admin.CreateStaffAsync(request, cancellationToken));
++        return StatusCode(StatusCodes.Status201Created, await _admin.CreateStaffAsync(request, User.GetRequiredUserId(), cancellationToken));
+     }
+ 
+     [HttpPut("staff/{id}")]
+diff --git a/backend/AEHotel.Service/Services/AdminService.cs b/backend/AEHotel.Service/Services/AdminService.cs
+index b1a6f20..65ee88f 100644
+--- a/backend/AEHotel.Service/Services/AdminService.cs
++++ b/backend/AEHotel.Service/Services/AdminService.cs
+@@ -1,3 +1,4 @@
++using System.Data;
+ using AEHotel.Domain.Entities;
+ using AEHotel.Repository.Data;
+ using AEHotel.Service.DTOs.Admin;
+@@ -21,11 +22,13 @@ public class AdminService : IAdminService
+ 
+     private readonly AppDbContext _db;
+     private readonly UserManager<AppUser> _users;
++    private readonly UserManagementPolicy _management;
+ 
+-    public AdminService(AppDbContext db, UserManager<AppUser> users)
++    public AdminService(AppDbContext db, UserManager<AppUser> users, UserManagementPolicy management)
+     {
+         _db = db;
+         _users = users;
++        _management = management;
+     }
+ 
+     private IQueryable<string> StaffUserIds()
+@@ -113,8 +116,12 @@ public class AdminService : IAdminService
+         return result;
+     }
+ 
+-    public async Task<StaffResponse> CreateStaffAsync(StaffRequest request, CancellationToken cancellationToken = default)
++    public async Task<StaffResponse> CreateStaffAsync(StaffRequest request, string currentUserId, CancellationToken cancellationToken = default)
+     {
++        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
++        var role = NormalizeRole(request.Role);
++        await _management.EnsureCanManageAsync(currentUserId, [], role);
++
+         var email = (request.Email ?? string.Empty).Trim();
+         if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+         {
+@@ -136,7 +143,6 @@ public class AdminService : IAdminService
+             throw new ValidationException("A user with this email already exists.");
+         }
+ 
+-        var role = NormalizeRole(request.Role);
+         var hotelId = await ResolveHotelAsync(role, request.AssignedHotelId, cancellationToken);
+ 
+         var user = new AppUser
+@@ -168,13 +174,17 @@ public class AdminService : IAdminService
+             throw new ValidationException($"Failed to assign role: {string.Join(" ", addRoleResult.Errors.Select(error => error.Description))}");
+         }
+ 
+-        return await MapStaffAsync(user, null);
++        var response = await MapStaffAsync(user, null);
++        await transaction.CommitAsync(cancellationToken);
++        return response;
+     }
+ 
+     public async Task<StaffResponse> UpdateStaffAsync(string id, StaffRequest request, string currentUserId, CancellationToken cancellationToken = default)
+     {
++        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+         var user = await _users.FindByIdAsync(id) ?? throw new NotFoundException("Staff member was not found.");
+         var currentRoles = await _users.GetRolesAsync(user);
++        await _management.EnsureCanManageAsync(currentUserId, currentRoles);
+         if (!currentRoles.Any(role => StaffRoles.Contains(role)))
+         {
+             throw new NotFoundException("Staff member was not found.");
+@@ -186,14 +196,15 @@ public class AdminService : IAdminService
+         }
+ 
+         var role = NormalizeRole(request.Role);
++        await _management.EnsureCanManageAsync(currentUserId, currentRoles, role);
+         var hotelId = await ResolveHotelAsync(role, request.AssignedHotelId, cancellationToken);
+ 
+         if (id == currentUserId && (!request.IsActive || !currentRoles.Contains(role)))
+         {
+-            throw new ValidationException("You cannot deactivate or change the role of your own account.");
++            throw new ForbiddenException("You cannot deactivate or change the role of your own account.");
+         }
+ 
+-        await EnsureAnotherSuperAdminAsync(user, currentRoles, role, request.IsActive);
++        await _management.EnsureAnotherSuperAdminAsync(user, currentRoles, role, request.IsActive);
+ 
+         var email = (request.Email ?? string.Empty).Trim();
+         if (!string.IsNullOrWhiteSpace(email) && !string.Equals(email, user.Email, StringComparison.OrdinalIgnoreCase))
+@@ -246,13 +257,17 @@ public class AdminService : IAdminService
+             }
+         }
+ 
+-        return await MapStaffAsync(user, null);
++        var response = await MapStaffAsync(user, null);
++        await transaction.CommitAsync(cancellationToken);
++        return response;
+     }
+ 
+     public async Task DeleteStaffAsync(string id, string currentUserId, CancellationToken cancellationToken = default)
+     {
++        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+         var user = await _users.FindByIdAsync(id) ?? throw new NotFoundException("Staff member was not found.");
+         var roles = await _users.GetRolesAsync(user);
++        await _management.EnsureCanManageAsync(currentUserId, roles);
+         if (!roles.Any(role => StaffRoles.Contains(role)))
+         {
+             throw new NotFoundException("Staff member was not found.");
+@@ -260,16 +275,17 @@ public class AdminService : IAdminService
+ 
+         if (id == currentUserId)
+         {
+-            throw new ValidationException("You cannot delete your own account.");
++            throw new ForbiddenException("You cannot delete your own account.");
+         }
+ 
+-        await EnsureAnotherSuperAdminAsync(user, roles, null, false);
++        await _management.EnsureAnotherSuperAdminAsync(user, roles, null, false);
+ 
+         var deleted = await _users.DeleteAsync(user);
+         if (!deleted.Succeeded)
+         {
+             throw new ValidationException(string.Join(" ", deleted.Errors.Select(error => error.Description)));
+         }
++        await transaction.CommitAsync(cancellationToken);
+     }
+ 
+     public async Task<ReportResponse> GetReportAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken = default)
+@@ -404,20 +420,6 @@ public class AdminService : IAdminService
+         return exists ? hotelId : throw new ValidationException("The selected hotel does not exist.");
+     }
+ 
+-    private async Task EnsureAnotherSuperAdminAsync(AppUser user, IList<string> currentRoles, string? nextRole, bool nextActive)
+-    {
+-        if (!currentRoles.Contains(AppRoles.SuperAdmin) || (nextRole == AppRoles.SuperAdmin && nextActive))
+-        {
+-            return;
+-        }
+-
+-        var others = (await _users.GetUsersInRoleAsync(AppRoles.SuperAdmin)).Count(item => item.Id != user.Id && !item.IsRestricted);
+-        if (others == 0)
+-        {
+-            throw new ValidationException("At least one active SuperAdmin must remain.");
+-        }
+-    }
+-
+     private async Task<StaffResponse> MapStaffAsync(AppUser user, IReadOnlyDictionary<int, string>? hotels)
+     {
+         var roles = await _users.GetRolesAsync(user);
+@@ -437,7 +439,7 @@ public class AdminService : IAdminService
+             Email = user.Email ?? string.Empty,
+             Phone = user.PhoneNumber ?? string.Empty,
+             JobTitle = user.JobTitle,
+-            Role = roles.FirstOrDefault(role => StaffRoles.Contains(role)) ?? roles.FirstOrDefault() ?? string.Empty,
++            Role = StaffRoles.FirstOrDefault(roles.Contains) ?? roles.FirstOrDefault() ?? string.Empty,
+             AssignedHotelId = user.AssignedHotelId,
+             AssignedHotelName = hotelName,
+             IsActive = !user.IsRestricted,
+diff --git a/backend/AEHotel.Service/Services/Interfaces/IAdminService.cs b/backend/AEHotel.Service/Services/Interfaces/IAdminService.cs
+index 4b6c45f..42e01bc 100644
+--- a/backend/AEHotel.Service/Services/Interfaces/IAdminService.cs
++++ b/backend/AEHotel.Service/Services/Interfaces/IAdminService.cs
+@@ -10,7 +10,7 @@ public interface IAdminService
+ 
+     Task<IReadOnlyList<StaffResponse>> GetStaffAsync(CancellationToken cancellationToken = default);
+ 
+-    Task<StaffResponse> CreateStaffAsync(StaffRequest request, CancellationToken cancellationToken = default);
++    Task<StaffResponse> CreateStaffAsync(StaffRequest request, string currentUserId, CancellationToken cancellationToken = default);
+ 
+     Task<StaffResponse> UpdateStaffAsync(string id, StaffRequest request, string currentUserId, CancellationToken cancellationToken = default);
+ 
+diff --git a/backend/AEHotel.Service/DependencyInjection.cs b/backend/AEHotel.Service/DependencyInjection.cs
+index 07e884b..6ce77ad 100644
+--- a/backend/AEHotel.Service/DependencyInjection.cs
++++ b/backend/AEHotel.Service/DependencyInjection.cs
+@@ -1,5 +1,6 @@
+ using AEHotel.Service.Services;
+ using AEHotel.Service.Services.Interfaces;
++using AEHotel.Service.Security;
+ using Microsoft.Extensions.DependencyInjection;
+ 
+ namespace AEHotel.Service;
+@@ -20,6 +21,7 @@ public static class DependencyInjection
+         services.AddScoped<IDiscountService, DiscountService>();
+         services.AddScoped<IStayReviewService, StayReviewService>();
+         services.AddScoped<IAdminService, AdminService>();
++        services.AddScoped<UserManagementPolicy>();
+         services.AddScoped<IAuthService, AuthService>();
+         services.AddScoped<IEmailSender, SmtpEmailSender>();
+         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+diff --git a/backend/AEHotel.Service/Security/UserManagementPolicy.cs b/backend/AEHotel.Service/Security/UserManagementPolicy.cs
+new file mode 100644
+index 0000000..303cfe3
+--- /dev/null
++++ b/backend/AEHotel.Service/Security/UserManagementPolicy.cs
+@@ -0,0 +1,45 @@
++using AEHotel.Domain.Entities;
++using AEHotel.Service.Exceptions;
++using Microsoft.AspNetCore.Identity;
++
++namespace AEHotel.Service.Security;
++
++// Call inside the same serializable transaction as the Identity writes.
++public sealed class UserManagementPolicy(UserManager<AppUser> users)
++{
++    public async Task EnsureCanManageAsync(string actorId, IList<string> targetRoles, string? nextRole = null)
++    {
++        var actor = await users.FindByIdAsync(actorId);
++        if (actor is null || actor.IsRestricted)
++        {
++            throw new ForbiddenException("An active administrator account is required.");
++        }
++
++        // Re-read Identity roles: an old JWT must not retain revoked privileges.
++        var actorRoles = await users.GetRolesAsync(actor);
++        var isSuperAdmin = actorRoles.Contains(AppRoles.SuperAdmin);
++        if (!isSuperAdmin && !actorRoles.Contains(AppRoles.Admin))
++        {
++            throw new ForbiddenException("Only administrators can manage users.");
++        }
++
++        if (!isSuperAdmin && (targetRoles.Contains(AppRoles.SuperAdmin) || nextRole == AppRoles.SuperAdmin))
++        {
++            throw new ForbiddenException("Only SuperAdmin can manage SuperAdmin accounts or assign that role.");
++        }
++    }
++
++    public async Task EnsureAnotherSuperAdminAsync(AppUser target, IList<string> currentRoles, string? nextRole, bool nextActive)
++    {
++        if (!currentRoles.Contains(AppRoles.SuperAdmin) || (nextRole == AppRoles.SuperAdmin && nextActive))
++        {
++            return;
++        }
++
++        var superAdmins = await users.GetUsersInRoleAsync(AppRoles.SuperAdmin);
++        if (!superAdmins.Any(user => user.Id != target.Id && !user.IsRestricted))
++        {
++            throw new ForbiddenException("At least one active SuperAdmin must remain.");
++        }
++    }
++}
+diff --git a/backend/AEHotel.SecurityTests/AEHotel.SecurityTests.csproj b/backend/AEHotel.SecurityTests/AEHotel.SecurityTests.csproj
+new file mode 100644
+index 0000000..570f016
+--- /dev/null
++++ b/backend/AEHotel.SecurityTests/AEHotel.SecurityTests.csproj
+@@ -0,0 +1,17 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <TargetFramework>net10.0</TargetFramework>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <Nullable>enable</Nullable>
++    <IsPackable>false</IsPackable>
++    <IsTestProject>true</IsTestProject>
++  </PropertyGroup>
++  <ItemGroup>
++    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
++    <PackageReference Include="xunit" Version="2.9.3" />
++    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
++    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
++    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
++    <ProjectReference Include="../AEHotel.API/AEHotel.API.csproj" />
++  </ItemGroup>
++</Project>
+diff --git a/backend/AEHotel.SecurityTests/SecurityApp.cs b/backend/AEHotel.SecurityTests/SecurityApp.cs
+new file mode 100644
+index 0000000..dec989d
+--- /dev/null
++++ b/backend/AEHotel.SecurityTests/SecurityApp.cs
+@@ -0,0 +1,127 @@
++using System.Net.Http.Headers;
++using AEHotel.API.Controllers;
++using AEHotel.API.Middleware;
++using AEHotel.API.Security;
++using AEHotel.Domain.Entities;
++using AEHotel.Repository.Data;
++using AEHotel.Service.Security;
++using AEHotel.Service.Services;
++using AEHotel.Service.Services.Interfaces;
++using Microsoft.AspNetCore.Authentication;
++using Microsoft.AspNetCore.Builder;
++using Microsoft.AspNetCore.DataProtection;
++using Microsoft.AspNetCore.Identity;
++using Microsoft.AspNetCore.TestHost;
++using Microsoft.Data.Sqlite;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.Extensions.DependencyInjection;
++using Microsoft.Extensions.Logging;
++using Microsoft.Extensions.Options;
++using Xunit;
++
++namespace AEHotel.SecurityTests;
++
++// Does not execute production Program.cs, migrations, seeders, or read its connection string.
++internal sealed class SecurityApp : IAsyncDisposable
++{
++    private readonly SqliteConnection _connection;
++    private readonly WebApplication _app;
++    private readonly JwtOptions _jwt;
++    public HttpClient Client { get; }
++
++    private SecurityApp(SqliteConnection connection, WebApplication app, JwtOptions jwt)
++    {
++        _connection = connection;
++        _app = app;
++        _jwt = jwt;
++        Client = app.GetTestClient();
++    }
++
++    public static async Task<SecurityApp> CreateAsync()
++    {
++        var connection = new SqliteConnection("Data Source=:memory:");
++        await connection.OpenAsync();
++        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing" });
++        builder.Logging.ClearProviders();
++        builder.WebHost.UseTestServer();
++        builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
++        builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connection));
++        builder.Services.AddIdentityCore<AppUser>()
++            .AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
++        var jwt = new JwtOptions
++        {
++            Key = "Security-tests-only-key-never-used-in-production-12345",
++            Issuer = "security-tests", Audience = "security-tests", ExpiryMinutes = 10
++        };
++        builder.Services.Configure<JwtOptions>(options =>
++        {
++            options.Key = jwt.Key; options.Issuer = jwt.Issuer;
++            options.Audience = jwt.Audience; options.ExpiryMinutes = jwt.ExpiryMinutes;
++        });
++        builder.Services.AddAuthentication(JwtAuthHandler.SchemeName)
++            .AddScheme<AuthenticationSchemeOptions, JwtAuthHandler>(JwtAuthHandler.SchemeName, _ => { });
++        builder.Services.AddAuthorization();
++        builder.Services.AddScoped<UserManagementPolicy>();
++        builder.Services.AddScoped<IAdminService, AdminService>();
++        builder.Services.AddControllers().AddApplicationPart(typeof(UsersController).Assembly);
++        var app = builder.Build();
++        app.UseMiddleware<ExceptionHandlingMiddleware>();
++        app.UseAuthentication();
++        app.UseAuthorization();
++        app.MapControllers();
++        await app.StartAsync();
++        var result = new SecurityApp(connection, app, jwt);
++        await result.WithScope(async services =>
++        {
++            await services.GetRequiredService<AppDbContext>().Database.EnsureCreatedAsync();
++            var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
++            foreach (var role in new[] { AppRoles.SuperAdmin, AppRoles.Admin, AppRoles.HotelManager,
++                         AppRoles.Receptionist, AppRoles.Customer, AppRoles.Member, AppRoles.User })
++                Assert.True((await roles.CreateAsync(new IdentityRole(role))).Succeeded);
++        });
++        return result;
++    }
++
++    public async Task WithScope(Func<IServiceProvider, Task> action)
++    {
++        await using var scope = _app.Services.CreateAsyncScope();
++        await action(scope.ServiceProvider);
++    }
++
++    public Task AddUser(string id, bool restricted = false, params string[] roles) => WithScope(async services =>
++    {
++        var users = services.GetRequiredService<UserManager<AppUser>>();
++        var user = new AppUser { Id = id, UserName = id + "@example.test", Email = id + "@example.test",
++            Name = id, Surname = id, IsRestricted = restricted, BirthDay = new DateTime(1990, 1, 1) };
++        Assert.True((await users.CreateAsync(user, "Safe-test123!")).Succeeded);
++        Assert.True((await users.AddToRolesAsync(user, roles)).Succeeded);
++    });
++
++    public void SignIn(string id, params string[] tokenRoles)
++    {
++        var token = new JwtTokenGenerator(Options.Create(_jwt)).CreateToken(
++            new AppUser { Id = id, Email = id + "@example.test" }, tokenRoles, out _);
++        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
++    }
++
++    public async Task<string> Snapshot(string id)
++    {
++        var value = "deleted";
++        await WithScope(async services =>
++        {
++            var users = services.GetRequiredService<UserManager<AppUser>>();
++            var user = await users.FindByIdAsync(id);
++            if (user is not null)
++                value = System.Text.Json.JsonSerializer.Serialize(new { user.Name, user.Email, user.IsRestricted,
++                    user.AssignedHotelId, user.PasswordHash, Roles = (await users.GetRolesAsync(user)).Order() });
++        });
++        return value;
++    }
++
++    public async ValueTask DisposeAsync()
++    {
++        Client.Dispose();
++        await _app.DisposeAsync();
++        await _connection.DisposeAsync();
++    }
++}
+diff --git a/backend/AEHotel.SecurityTests/UserManagementTests.cs b/backend/AEHotel.SecurityTests/UserManagementTests.cs
+new file mode 100644
+index 0000000..a6177db
+--- /dev/null
++++ b/backend/AEHotel.SecurityTests/UserManagementTests.cs
+@@ -0,0 +1,221 @@
++using System.Net;
++using System.Net.Http.Json;
++using System.Security.Claims;
++using AEHotel.API.Security;
++using AEHotel.Domain.Entities;
++using AEHotel.Service.DTOs.Admin;
++using AEHotel.Service.Exceptions;
++using AEHotel.Service.Security;
++using Microsoft.AspNetCore.Identity;
++using Microsoft.Extensions.DependencyInjection;
++using Xunit;
++
++namespace AEHotel.SecurityTests;
++
++public class UserManagementTests
++{
++    private static object Staff(string role = AppRoles.SuperAdmin, bool active = true, string? password = null) =>
++        new { Name = "Edited", Email = "edited@example.test", Role = role, IsActive = active, Password = password };
++
++    [Theory]
++    [InlineData("edit")]
++    [InlineData("password")]
++    [InlineData("deactivate")]
++    [InlineData("delete")]
++    [InlineData("remove-role")]
++    [InlineData("same-role")]
++    [InlineData("staff-demote")]
++    public async Task Admin_cannot_manage_SuperAdmin_even_with_multiple_roles(string operation)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("admin", false, AppRoles.Admin);
++        await app.AddUser("target", false, AppRoles.Admin, AppRoles.SuperAdmin);
++        await app.AddUser("other", false, AppRoles.SuperAdmin);
++        app.SignIn("admin", AppRoles.Admin);
++        var before = await app.Snapshot("target");
++        var response = operation switch
++        {
++            "delete" => await app.Client.DeleteAsync("/api/staff/target"),
++            "remove-role" => await app.Client.PutAsJsonAsync("/api/users/target/role", new { Role = "Admin" }),
++            "same-role" => await app.Client.PutAsJsonAsync("/api/users/target/role", new { Role = "SuperAdmin" }),
++            _ => await app.Client.PutAsJsonAsync("/api/staff/target", Staff(
++                operation == "staff-demote" ? "Admin" : "SuperAdmin", operation != "deactivate",
++                operation == "password" ? "Changed-123!" : null))
++        };
++        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
++        Assert.Equal(before, await app.Snapshot("target"));
++        Assert.Contains("message", await response.Content.ReadAsStringAsync());
++    }
++
++    [Theory]
++    [InlineData("role", "target")]
++    [InlineData("role", "admin")]
++    [InlineData("staff", "target")]
++    [InlineData("staff", "admin")]
++    [InlineData("create", "new")]
++    public async Task Admin_cannot_grant_SuperAdmin_including_self_and_create(string route, string target)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("admin", false, AppRoles.Admin);
++        await app.AddUser("target", false, AppRoles.Admin);
++        app.SignIn("admin", AppRoles.Admin);
++        var before = await app.Snapshot(target);
++        var response = route switch
++        {
++            "create" => await app.Client.PostAsJsonAsync("/api/staff", Staff(" sUpErAdMiN ", password: "Safe-test123!")),
++            "staff" => await app.Client.PutAsJsonAsync($"/api/staff/{target}", Staff(" sUpErAdMiN ")),
++            _ => await app.Client.PutAsJsonAsync($"/api/users/{target}/role", new { Role = " sUpErAdMiN " })
++        };
++        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
++        Assert.Equal(before, await app.Snapshot(target));
++        await app.WithScope(async services => Assert.Null(await services.GetRequiredService<UserManager<AppUser>>()
++            .FindByEmailAsync("edited@example.test")));
++    }
++
++    [Theory]
++    [InlineData(AppRoles.Admin)]
++    [InlineData(AppRoles.SuperAdmin)]
++    public async Task Administrators_can_manage_ordinary_staff(string role)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, role);
++        app.SignIn("actor", role);
++        var created = await app.Client.PostAsJsonAsync("/api/staff", Staff("Admin", password: "Safe-test123!"));
++        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
++        var member = (await created.Content.ReadFromJsonAsync<StaffResponse>())!;
++        Assert.Equal(HttpStatusCode.OK, (await app.Client.PutAsJsonAsync($"/api/staff/{member.Id}", Staff("Admin", false))).StatusCode);
++        Assert.Equal(HttpStatusCode.OK, (await app.Client.PutAsJsonAsync($"/api/staff/{member.Id}", Staff("Admin"))).StatusCode);
++        Assert.Equal(HttpStatusCode.NoContent, (await app.Client.DeleteAsync($"/api/staff/{member.Id}")).StatusCode);
++        Assert.Equal("deleted", await app.Snapshot(member.Id));
++    }
++
++    [Theory]
++    [InlineData("edit")]
++    [InlineData("deactivate")]
++    [InlineData("delete")]
++    [InlineData("remove-role")]
++    public async Task SuperAdmin_can_manage_another_when_one_active_remains(string operation)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, AppRoles.SuperAdmin);
++        await app.AddUser("target", false, AppRoles.SuperAdmin);
++        app.SignIn("actor", AppRoles.SuperAdmin);
++        var response = operation switch
++        {
++            "delete" => await app.Client.DeleteAsync("/api/staff/target"),
++            "remove-role" => await app.Client.PutAsJsonAsync("/api/users/target/role", new { Role = "Admin" }),
++            _ => await app.Client.PutAsJsonAsync("/api/staff/target", Staff(active: operation != "deactivate"))
++        };
++        Assert.Equal(operation == "delete" ? HttpStatusCode.NoContent : HttpStatusCode.OK, response.StatusCode);
++    }
++
++    [Fact]
++    public async Task SuperAdmin_can_grant_SuperAdmin_and_create_another()
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, AppRoles.SuperAdmin);
++        await app.AddUser("target", false, AppRoles.Admin);
++        app.SignIn("actor", AppRoles.SuperAdmin);
++        Assert.Equal(HttpStatusCode.OK, (await app.Client.PutAsJsonAsync("/api/users/target/role", new { Role = "SuperAdmin" })).StatusCode);
++        Assert.Equal(HttpStatusCode.Created, (await app.Client.PostAsJsonAsync("/api/staff", Staff(password: "Safe-test123!"))).StatusCode);
++    }
++
++    [Theory]
++    [InlineData("delete")]
++    [InlineData("deactivate")]
++    [InlineData("remove-role")]
++    [InlineData("staff-demote")]
++    public async Task Last_active_SuperAdmin_is_protected_in_all_routes(string operation)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, AppRoles.SuperAdmin, AppRoles.Admin);
++        await app.AddUser("inactive", true, AppRoles.SuperAdmin);
++        app.SignIn("actor", AppRoles.SuperAdmin);
++        var before = await app.Snapshot("actor");
++        var response = operation switch
++        {
++            "delete" => await app.Client.DeleteAsync("/api/staff/actor"),
++            "remove-role" => await app.Client.PutAsJsonAsync("/api/users/actor/role", new { Role = "Admin" }),
++            _ => await app.Client.PutAsJsonAsync("/api/staff/actor", Staff(operation == "staff-demote" ? "Admin" : "SuperAdmin", operation != "deactivate"))
++        };
++        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
++        Assert.Equal(before, await app.Snapshot("actor"));
++        // Exercise the shared last-active guard independently of the self-operation guard.
++        await app.WithScope(async services =>
++        {
++            var users = services.GetRequiredService<UserManager<AppUser>>();
++            var user = (await users.FindByIdAsync("actor"))!;
++            await Assert.ThrowsAsync<ForbiddenException>(() => services.GetRequiredService<UserManagementPolicy>()
++                .EnsureAnotherSuperAdminAsync(user, [AppRoles.SuperAdmin], operation == "deactivate" ? "SuperAdmin" : null, false));
++        });
++    }
++
++    [Theory]
++    [InlineData(AppRoles.Admin, false)]
++    [InlineData(AppRoles.HotelManager, false)]
++    [InlineData(AppRoles.Receptionist, false)]
++    [InlineData(AppRoles.SuperAdmin, true)]
++    public async Task Stale_SuperAdmin_JWT_does_not_bypass_current_database_permissions(string currentRole, bool restricted)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", restricted, currentRole);
++        await app.AddUser("target", false, AppRoles.SuperAdmin);
++        app.SignIn("actor", AppRoles.SuperAdmin);
++        Assert.Equal(HttpStatusCode.Forbidden, (await app.Client.DeleteAsync("/api/staff/target")).StatusCode);
++        Assert.Equal(HttpStatusCode.Forbidden, (await app.Client.PutAsJsonAsync("/api/users/target/role", new { Role = "Admin" })).StatusCode);
++    }
++
++    [Theory]
++    [InlineData(AppRoles.HotelManager)]
++    [InlineData(AppRoles.Receptionist)]
++    [InlineData(AppRoles.Customer)]
++    public async Task Other_roles_cannot_access_global_user_management(string role)
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, role);
++        await app.AddUser("target", false, AppRoles.Admin);
++        app.SignIn("actor", role);
++        Assert.Equal(HttpStatusCode.Forbidden, (await app.Client.GetAsync("/api/staff")).StatusCode);
++        Assert.Equal(HttpStatusCode.Forbidden, (await app.Client.PutAsJsonAsync("/api/staff/target", Staff("Admin"))).StatusCode);
++        Assert.Equal(HttpStatusCode.Forbidden, (await app.Client.DeleteAsync("/api/staff/target")).StatusCode);
++        Assert.Equal(HttpStatusCode.Forbidden, (await app.Client.PutAsJsonAsync("/api/users/actor/role", new { Role = "Admin" })).StatusCode);
++    }
++
++    [Fact]
++    public async Task Admin_can_list_SuperAdmin_and_manage_customer_roles()
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, AppRoles.Admin);
++        await app.AddUser("target", false, AppRoles.Admin, AppRoles.SuperAdmin);
++        await app.AddUser("customer", false, AppRoles.Customer);
++        app.SignIn("actor", AppRoles.Admin);
++        var staff = await app.Client.GetFromJsonAsync<List<StaffResponse>>("/api/staff");
++        Assert.Equal("SuperAdmin", staff!.Single(user => user.Id == "target").Role);
++        Assert.Equal(HttpStatusCode.OK, (await app.Client.GetAsync("/api/users")).StatusCode);
++        Assert.Equal(HttpStatusCode.OK, (await app.Client.PutAsJsonAsync("/api/users/customer/role", new { Role = "Member" })).StatusCode);
++    }
++
++    [Theory]
++    [InlineData(AppRoles.HotelManager)]
++    [InlineData(AppRoles.Receptionist)]
++    public void Existing_hotel_scope_is_preserved(string role)
++    {
++        var principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, role), new Claim("assignedHotelId", "7")], "test"));
++        principal.EnsureHotelScope(7);
++        Assert.Throws<ForbiddenException>(() => principal.EnsureHotelScope(8));
++        Assert.Throws<ForbiddenException>(() => principal.EnsureHotelScope(null));
++    }
++
++    [Fact]
++    public async Task Failed_password_update_rolls_back_profile_status_and_roles()
++    {
++        await using var app = await SecurityApp.CreateAsync();
++        await app.AddUser("actor", false, AppRoles.SuperAdmin);
++        await app.AddUser("target", false, AppRoles.SuperAdmin);
++        app.SignIn("actor", AppRoles.SuperAdmin);
++        var before = await app.Snapshot("target");
++        var response = await app.Client.PutAsJsonAsync("/api/staff/target", Staff("Admin", false, "x"));
++        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
++        Assert.Equal(before, await app.Snapshot("target"));
++    }
++}
+diff --git a/backend/AEHotel.SecurityTests/frontend-security.mjs b/backend/AEHotel.SecurityTests/frontend-security.mjs
+new file mode 100644
+index 0000000..52df194
+--- /dev/null
++++ b/backend/AEHotel.SecurityTests/frontend-security.mjs
+@@ -0,0 +1,124 @@
++// Usage: node frontend-security.mjs <frontend-root> <playwright-core-entry>
++// All API requests are intercepted. No production users or API mutations are used.
++import assert from 'node:assert/strict';
++import { pathToFileURL } from 'node:url';
++import path from 'node:path';
++const [front, playwrightEntry] = process.argv.slice(2);
++const { createServer } = await import(pathToFileURL(path.join(front, 'node_modules/vite/dist/node/index.js')));
++const { chromium } = await import(pathToFileURL(path.resolve(playwrightEntry)));
++const server = await createServer({ root: front, server: { host: '127.0.0.1', port: 5198, strictPort: true } });
++await server.listen();
++const browser = await chromium.launch({ channel: 'msedge', headless: true });
++const base = 'http://127.0.0.1:5198';
++const staff = [
++  { id: 'super', name: 'Protected', surname: 'Super', email: 'super@example.test', role: 'SuperAdmin', isActive: true },
++  { id: 'ordinary', name: 'Ordinary', surname: 'Admin', email: 'ordinary@example.test', role: 'Admin', isActive: true },
++];
++const users = staff.map((member) => ({ ...member, roles: member.id === 'super' ? ['Admin', 'SuperAdmin'] : [member.role] }));
++let passed = 0;
++const check = (label) => { passed++; console.log(`PASS ${label}`); };
++
++async function session(role, cachedRole = role) {
++  const context = await browser.newContext();
++  const writes = [];
++  await context.route('**/*', async (route) => {
++    const request = route.request();
++    const url = new URL(request.url());
++    if (url.pathname.startsWith('/api/')) {
++      if (request.method() !== 'GET') {
++        writes.push({ path: url.pathname, method: request.method() });
++        return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ message: 'Test forbids writes' }) });
++      }
++      const payload = url.pathname === '/api/staff' ? staff : url.pathname === '/api/users' ? users : [];
++      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) });
++    }
++    if (url.origin === base) return route.continue();
++    return route.abort();
++  });
++  if (role) {
++    await context.addInitScript(({ role, cachedRole }) => {
++      const claims = { sub: 'actor', exp: Math.floor(Date.now() / 1000) + 3600,
++        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role': role,
++        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'actor@example.test' };
++      localStorage.setItem('authToken', 'test.' + btoa(JSON.stringify(claims)).replace(/=+$/, '') + '.fixture');
++      localStorage.setItem('user', JSON.stringify({ name: 'Test actor', email: 'actor@example.test', roles: [cachedRole] }));
++      localStorage.setItem('authExpiresAt', new Date(Date.now() + 3600000).toISOString());
++    }, { role, cachedRole });
++  }
++  return { context, page: await context.newPage(), writes };
++}
++
++try {
++  for (const cachedRole of ['Admin', 'SuperAdmin']) {
++    const { context, page, writes } = await session('Admin', cachedRole);
++    await page.goto(base + '/admin/isciler');
++    const protectedRow = page.getByRole('row').filter({ hasText: 'super@example.test' });
++    await protectedRow.waitFor();
++    assert.equal(await protectedRow.getByRole('button').count(), 0);
++    const ordinaryRow = page.getByRole('row').filter({ hasText: 'ordinary@example.test' });
++    assert.equal(await ordinaryRow.getByRole('button', { name: 'Redaktə' }).count(), 1);
++    assert.equal(await ordinaryRow.getByRole('button', { name: 'Sil', exact: true }).count(), 1);
++    check(`Admin staff buttons; cached role=${cachedRole}`);
++    await ordinaryRow.getByRole('button', { name: 'Redaktə' }).click();
++    assert.equal(await page.locator('form option[value="SuperAdmin"]').count(), 0);
++    check(`Admin cannot choose SuperAdmin; cached role=${cachedRole}`);
++    await page.goto(base + '/admin/users');
++    const userRow = page.getByRole('row').filter({ hasText: 'super@example.test' });
++    await userRow.waitFor();
++    assert.equal(await userRow.locator('select').count(), 0);
++    assert.match(await userRow.innerText(), /SuperAdmin/);
++    assert.equal(await page.getByRole('row').filter({ hasText: 'ordinary@example.test' }).locator('select').count(), 1);
++    assert.equal(writes.length, 0);
++    check(`Direct /admin/users protects multi-role SuperAdmin; cached role=${cachedRole}`);
++    await context.close();
++  }
++
++  const { context, page } = await session('SuperAdmin', 'Admin');
++  await page.goto(base + '/admin/isciler');
++  const protectedRow = page.getByRole('row').filter({ hasText: 'super@example.test' });
++  await protectedRow.waitFor();
++  assert.equal(await protectedRow.getByRole('button', { name: 'Sil', exact: true }).count(), 1);
++  await protectedRow.getByRole('button', { name: 'Redaktə' }).click();
++  assert.equal(await page.locator('form select').first().inputValue(), 'SuperAdmin');
++  assert.equal(await page.locator('form option[value="SuperAdmin"]').count(), 1);
++  check('SuperAdmin retains staff controls and current role');
++  await page.goto(base + '/admin/users');
++  const superUser = page.getByRole('row').filter({ hasText: 'super@example.test' });
++  await superUser.waitFor();
++  assert.equal(await superUser.locator('select').inputValue(), 'SuperAdmin');
++  check('SuperAdmin retains user role controls');
++
++  const authChecks = await page.evaluate(async () => {
++    const auth = await import('/src/api/auth.js');
++    const original = localStorage.getItem('authToken');
++    localStorage.setItem('authToken', 'malformed');
++    const malformedDenied = !auth.hasRole('SuperAdmin');
++    const expired = { role: 'SuperAdmin', exp: Math.floor(Date.now() / 1000) - 10 };
++    localStorage.setItem('authToken', 'test.' + btoa(JSON.stringify(expired)) + '.fixture');
++    const expiredDenied = !auth.hasRole('SuperAdmin');
++    localStorage.setItem('authToken', original);
++    return { malformedDenied, expiredDenied };
++  });
++  assert.deepEqual(authChecks, { malformedDenied: true, expiredDenied: true });
++  check('Malformed and expired tokens fail closed despite cached role');
++  await context.close();
++
++  for (const role of ['HotelManager', 'Receptionist']) {
++    const { context, page } = await session(role, 'SuperAdmin');
++    await page.goto(base + '/admin/users');
++    await page.waitForURL((url) => url.pathname !== '/admin/users');
++    assert.equal(await page.getByRole('row').filter({ hasText: 'super@example.test' }).count(), 0);
++    check(`${role} direct route is denied despite forged cached role`);
++    await context.close();
++  }
++
++  const anonymous = await session(null);
++  await anonymous.page.goto(base + '/admin/isciler');
++  await anonymous.page.waitForURL((url) => url.pathname === '/login');
++  check('Anonymous direct staff route requires login');
++  await anonymous.context.close();
++  console.log(`${passed} frontend browser checks passed.`);
++} finally {
++  await browser.close();
++  await server.close();
++}
+diff --git a/backend/AEHotel.SecurityTests/README.md b/backend/AEHotel.SecurityTests/README.md
+new file mode 100644
+index 0000000..c8e76ed
+--- /dev/null
++++ b/backend/AEHotel.SecurityTests/README.md
+@@ -0,0 +1,30 @@
++# User-management security regression tests
++
++Run from the backend root:
++
++```powershell
++dotnet test AEHotel.sln -c Release --logger "trx;LogFileName=security.trx"
++```
++
++The HTTP tests use the actual controllers, services, Identity stores, JWT authentication handler,
++and exception middleware with a separate SQLite `:memory:` connection for every test.
++They never start production `Program.cs`, load its connection string, run its migrations or seeders,
++or send requests to the running application. All accounts use `example.test` addresses.
++
++Coverage includes Admin restrictions on every existing staff mutation and role endpoint,
++self-promotion, mixed roles, case-insensitive role input, revoked/restricted actors with stale JWTs,
++last-active SuperAdmin, legitimate Admin/SuperAdmin actions, hotel-scope helpers, and rollback after
++a failed password change. SQL Server concurrent transaction/deadlock behavior needs a separate test environment.
++
++Frontend browser tests (requires the actual frontend path and an installed Microsoft Edge):
++
++```powershell
++npm install --prefix artifacts/browser-tests --no-audit --no-fund playwright-core
++node AEHotel.SecurityTests/frontend-security.mjs "<frontend-root>" artifacts/browser-tests/node_modules/playwright-core/index.mjs
++```
++
++This starts an isolated Vite server on `127.0.0.1:5198` and headless Edge. Every `/api/` request is
++intercepted: reads return fixtures, writes receive a test 403, and external requests are aborted.
++The fixture JWTs are for client rendering only; backend tests separately exercise real JWT validation.
++Tests cover controls on both pages, forged cached roles, mixed target roles, SuperAdmin controls,
++invalid/expired tokens, and direct URL access for other roles and anonymous visitors.
+diff --git a/frontend/src/api/auth.js b/frontend/src/api/auth.js
+index 5c21dfb..65dd8f0 100644
+--- a/frontend/src/api/auth.js
++++ b/frontend/src/api/auth.js
+@@ -20,13 +20,32 @@ export function getAuthToken() {
+ }
+ 
+ export function getAuthUser() {
+-  if (!getAuthToken()) {
++  const token = getAuthToken();
++  if (!token) {
+     return null;
+   }
+ 
+   try {
++    // UI hints come from the JWT, never the editable cached user.roles value.
++    // Signature validation and current database permissions remain server-side.
++    const parts = token.split('.');
++    if (parts.length !== 3) return null;
++    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
++    const bytes = Uint8Array.from(atob(payload.padEnd(Math.ceil(payload.length / 4) * 4, '=')), (c) => c.charCodeAt(0));
++    const claims = JSON.parse(new TextDecoder().decode(bytes));
++    if (!Number.isFinite(claims.exp) || claims.exp * 1000 <= Date.now()) return null;
++    if (claims.nbf && claims.nbf * 1000 > Date.now()) return null;
++    const roles = claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ?? claims.role ?? [];
+     const raw = localStorage.getItem(USER_KEY);
+-    return raw ? JSON.parse(raw) : null;
++    let cached = {};
++    try { cached = raw ? JSON.parse(raw) : {}; } catch { /* Ignore corrupt display metadata. */ }
++    return {
++      ...cached,
++      id: claims.sub || claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
++      email: claims.email || claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
++      roles: (Array.isArray(roles) ? roles : [roles]).filter((role) => typeof role === 'string'),
++      assignedHotelId: Number(claims.assignedHotelId) || null,
++    };
+   } catch {
+     return null;
+   }
+@@ -44,6 +63,12 @@ export function hasRole(...allowed) {
+   return Array.isArray(roles) && roles.some((role) => allowed.includes(role));
+ }
+ 
++export function canManageUser(target) {
++  if (!target || !hasRole('SuperAdmin', 'Admin')) return false;
++  const roles = Array.isArray(target.roles) ? target.roles : [target.role];
++  return hasRole('SuperAdmin') || !roles.includes('SuperAdmin');
++}
++
+ export function getPostLoginPath(roles) {
+   const list = Array.isArray(roles) ? roles : [];
+   const isReceptionOnly =
+diff --git a/frontend/src/pages/Admin/Staff/AdminStaff.jsx b/frontend/src/pages/Admin/Staff/AdminStaff.jsx
+index 7025ebc..ecd8e96 100644
+--- a/frontend/src/pages/Admin/Staff/AdminStaff.jsx
++++ b/frontend/src/pages/Admin/Staff/AdminStaff.jsx
+@@ -1,12 +1,12 @@
+ import React, { Fragment, useEffect, useMemo, useState } from 'react';
+ import { FaRegTrashAlt } from 'react-icons/fa';
+ import { createStaff, deleteStaff, getHotels, getStaff, updateStaff } from '../../../api/client';
+-import { getAuthUser } from '../../../api/auth';
++import { canManageUser, getAuthUser, hasRole } from '../../../api/auth';
+ import '../Hotels/AdminHotels.css';
+ import '../Manage/AdminManage.css';
+ 
+-// Role options - SuperAdmin cannot be assigned via UI (backend only)
+ const ROLE_OPTIONS = [
++  { value: 'SuperAdmin', label: 'Super Admin' },
+   { value: 'Admin', label: 'Admin' },
+   { value: 'HotelManager', label: 'Hotel Manager' },
+   { value: 'Receptionist', label: 'Receptionist' },
+@@ -43,6 +43,7 @@ const AdminStaff = () => {
+   const [formError, setFormError] = useState('');
+   const [message, setMessage] = useState('');
+   const currentEmail = (getAuthUser()?.email || '').toLowerCase();
++  const roleOptions = ROLE_OPTIONS.filter((role) => role.value !== 'SuperAdmin' || hasRole('SuperAdmin'));
+ 
+   const load = () => {
+     setLoading(true);
+@@ -80,12 +81,14 @@ const AdminStaff = () => {
+   }, [staff, search, roleFilter, statusFilter]);
+ 
+   const startNew = () => {
++    if (!hasRole('SuperAdmin', 'Admin')) return;
+     setMessage('');
+     setFormError('');
+     setEditing({ ...EMPTY, assignedHotelId: hotels[0]?.id || '' });
+   };
+ 
+   const startEdit = (member) => {
++    if (!canManageUser(member)) return;
+     setMessage('');
+     setFormError('');
+     setEditing({ ...member, assignedHotelId: member.assignedHotelId || '', password: '' });
+@@ -95,6 +98,11 @@ const AdminStaff = () => {
+ 
+   const save = (event) => {
+     event.preventDefault();
++    const target = editing?.id ? staff.find((member) => member.id === editing.id) : editing;
++    if (!canManageUser(target) || (editing?.role === 'SuperAdmin' && !hasRole('SuperAdmin'))) {
++      setFormError('Bu əməliyyat üçün icazəniz yoxdur.');
++      return;
++    }
+     setSaving(true);
+     setFormError('');
+     const payload = {
+@@ -120,6 +128,7 @@ const AdminStaff = () => {
+   };
+ 
+   const remove = (member) => {
++    if (!canManageUser(member)) return;
+     if (!window.confirm(`${member.name} ${member.surname} işçi siyahısından silinsin?`)) return;
+     setMessage('');
+     deleteStaff(member.id)
+@@ -159,7 +168,7 @@ const AdminStaff = () => {
+             <label>
+               Rol
+               <select value={editing?.role} onChange={(e) => change('role', e.target.value)}>
+-                {ROLE_OPTIONS.map((role) => (
++                {roleOptions.map((role) => (
+                   <option key={role.value} value={role.value}>{role.label}</option>
+                 ))}
+               </select>
+@@ -209,7 +218,7 @@ const AdminStaff = () => {
+           <h1 className="page-title">İşçilər</h1>
+           <p className="page-subtitle">Admin, Hotel Manager və Receptionist hesabları</p>
+         </div>
+-        {!loading && !loadError && (
++        {!loading && !loadError && hasRole('SuperAdmin', 'Admin') && (
+           <button type="button" className="btn-admin-primary" onClick={startNew}>İşçi əlavə et</button>
+         )}
+       </div>
+@@ -263,10 +272,10 @@ const AdminStaff = () => {
+                 </tr>
+               </thead>
+               <tbody>
+-                {editing && !editing.id && form}
++                {editing && !editing.id && canManageUser(editing) && form}
+                 {visible.map((member) => (
+                   <Fragment key={member.id}>
+-                    {editing?.id === member.id ? (
++                    {editing?.id === member.id && canManageUser(member) ? (
+                       form
+                     ) : (
+                       <tr>
+@@ -285,8 +294,8 @@ const AdminStaff = () => {
+                           </span>
+                         </td>
+                         <td className="table-actions">
+-                          <button type="button" onClick={() => startEdit(member)}>Redaktə</button>
+-                          {member.email.toLowerCase() !== currentEmail && (
++                          {canManageUser(member) && <button type="button" onClick={() => startEdit(member)}>Redaktə</button>}
++                          {canManageUser(member) && member.email.toLowerCase() !== currentEmail && (
+                             <button type="button" className="danger" onClick={() => remove(member)} aria-label="Sil" title="Sil">
+                               <FaRegTrashAlt />
+                             </button>
+diff --git a/frontend/src/pages/Admin/Users/AdminUsers.jsx b/frontend/src/pages/Admin/Users/AdminUsers.jsx
+index 2b4c2fe..ae87aa4 100644
+--- a/frontend/src/pages/Admin/Users/AdminUsers.jsx
++++ b/frontend/src/pages/Admin/Users/AdminUsers.jsx
+@@ -1,9 +1,10 @@
+ import React, { useEffect, useMemo, useState } from 'react';
+ import { getHotels, getUsers, updateUserRole } from '../../../api/client';
++import { canManageUser, hasRole } from '../../../api/auth';
+ import '../Hotels/AdminHotels.css';
+ 
+-// Role options - SuperAdmin cannot be assigned via UI (backend only)
+ const ROLE_OPTIONS = [
++  { value: 'SuperAdmin', label: 'Super Admin' },
+   { value: 'Admin', label: 'Admin' },
+   { value: 'HotelManager', label: 'Hotel Manager' },
+   { value: 'Receptionist', label: 'Receptionist' },
+@@ -11,7 +12,7 @@ const ROLE_OPTIONS = [
+   { value: 'Member', label: 'Member' },
+ ];
+ 
+-const primaryRole = (roles) => (Array.isArray(roles) && roles[0]) || 'Customer';
++const primaryRole = (roles) => roles?.includes('SuperAdmin') ? 'SuperAdmin' : (Array.isArray(roles) && roles[0]) || 'Customer';
+ 
+ const needsHotel = (role) => role === 'HotelManager' || role === 'Receptionist';
+ 
+@@ -23,6 +24,7 @@ const AdminUsers = () => {
+   const [loadError, setLoadError] = useState('');
+   const [savingId, setSavingId] = useState('');
+   const [message, setMessage] = useState('');
++  const roleOptions = ROLE_OPTIONS.filter((role) => role.value !== 'SuperAdmin' || hasRole('SuperAdmin'));
+ 
+   const loadUsers = (silent = false) => {
+     if (!silent) setLoading(true);
+@@ -59,6 +61,10 @@ const AdminUsers = () => {
+   }, [users, search]);
+ 
+   const saveAssignment = (user, role, assignedHotelId) => {
++    if (!canManageUser(user) || (role === 'SuperAdmin' && !hasRole('SuperAdmin'))) {
++      setMessage('Bu əməliyyat üçün icazəniz yoxdur.');
++      return;
++    }
+     const nextRole = role || primaryRole(user.roles);
+     const nextHotel = needsHotel(nextRole)
+       ? Number(assignedHotelId || user.assignedHotelId || hotels[0]?.id || 0) || null
+@@ -133,18 +139,20 @@ const AdminUsers = () => {
+                     <td><strong>{user.name}</strong></td>
+                     <td>{user.email}</td>
+                     <td>
++                      {canManageUser(user) ? (
+                       <select
+                         value={primaryRole(user.roles)}
+                         disabled={savingId === user.id}
+                         onChange={(e) => handleRoleChange(user, e.target.value)}
+                       >
+-                        {ROLE_OPTIONS.map((role) => (
++                        {roleOptions.map((role) => (
+                           <option key={role.value} value={role.value}>{role.label}</option>
+                         ))}
+                       </select>
++                      ) : primaryRole(user.roles)}
+                     </td>
+                     <td>
+-                      {needsHotel(primaryRole(user.roles)) ? (
++                      {canManageUser(user) && needsHotel(primaryRole(user.roles)) ? (
+                         <select
+                           value={user.assignedHotelId || ''}
+                           disabled={savingId === user.id || hotels.length === 0}

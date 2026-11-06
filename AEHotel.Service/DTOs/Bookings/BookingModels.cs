@@ -2,13 +2,28 @@ using System.Text.Json.Serialization;
 
 namespace AEHotel.Service.DTOs.Bookings;
 
-public class BookingRequest
+public class HotelStayRequest
+{
+    public List<int>? RoomIds { get; set; }
+    public int? Rooms { get; set; }
+    public int? Adults { get; set; }
+    public int? Children { get; set; }
+    public int? RoomId { get; set; }
+    public DateOnly? CheckIn { get; set; }
+    public DateOnly? CheckOut { get; set; }
+    public int Guests { get; set; } = 1;
+}
+
+public record StayRoom(int RoomId, string RoomName, int Adults, int Children, decimal PricePerNight, decimal Total);
+public record HotelStayQuote(int Nights, decimal Total, IReadOnlyList<StayRoom> Rooms);
+
+public class BookingRequest : HotelStayRequest
 {
     public string BookingType { get; set; } = "hotel";
 
-    public int? HotelId { get; set; }
+    public decimal? ExpectedStayTotal { get; set; }
 
-    public int? RoomId { get; set; }
+    public int? HotelId { get; set; }
 
     public int? FlightId { get; set; }
 
@@ -20,13 +35,7 @@ public class BookingRequest
 
     public string? GuestPhone { get; set; }
 
-    public DateOnly? CheckIn { get; set; }
-
-    public DateOnly? CheckOut { get; set; }
-
     public DateOnly? TravelDate { get; set; }
-
-    public int Guests { get; set; } = 1;
 
     public string? SpecialRequests { get; set; }
 
@@ -66,6 +75,8 @@ public class BookingStatusRequest
 
 public class BookingResponse
 {
+    public IReadOnlyList<StayRoom> Rooms { get; set; } = [];
+
     public int Id { get; set; }
 
     public string Code { get; set; } = string.Empty;

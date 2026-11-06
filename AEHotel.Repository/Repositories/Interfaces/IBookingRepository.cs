@@ -11,6 +11,8 @@ public interface IBookingRepository
 
     Task<IReadOnlyList<Booking>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
+    Task LockRoomForBookingAsync(int roomId, CancellationToken cancellationToken);
+
     Task<bool> HasHotelOverlapAsync(int roomId, DateOnly checkIn, DateOnly checkOut, int? excludeBookingId, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsForRoomAsync(int roomId, CancellationToken cancellationToken = default);

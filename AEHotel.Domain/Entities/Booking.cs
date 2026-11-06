@@ -17,6 +17,8 @@ public class Booking : BaseEntity
 
     public int? RoomId { get; set; }
 
+    public List<BookingRoom> Rooms { get; set; } = [];
+
     public Room? Room { get; set; }
 
     public int? FlightId { get; set; }

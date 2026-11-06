@@ -28,7 +28,7 @@ public class HotelRepository : BaseRepository<Hotel>, IHotelRepository
 
         if (includeRooms)
         {
-            query = query.Include(hotel => hotel.Rooms);
+            query = query.Include(hotel => hotel.Rooms.Where(room => !room.IsDeleted));
         }
 
         if (!tracking)

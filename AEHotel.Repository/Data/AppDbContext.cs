@@ -31,6 +31,13 @@ public class AppDbContext : IdentityDbContext<AppUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        var stays = builder.Entity<BookingRoom>();
+        stays.ToTable("BookingRooms");
+        stays.HasKey(stay => new { stay.BookingId, stay.RoomId });
+        stays.HasOne<Booking>().WithMany(booking => booking.Rooms).HasForeignKey(stay => stay.BookingId);
+        stays.HasOne<Room>().WithMany().HasForeignKey(stay => stay.RoomId).OnDelete(DeleteBehavior.Restrict);
+        stays.Property(stay => stay.RoomName).HasMaxLength(200);
+        stays.Property(stay => stay.PricePerNight).HasPrecision(18, 2);
         builder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         builder.Entity<StayReview>()
             .HasIndex(item => item.BookingId)

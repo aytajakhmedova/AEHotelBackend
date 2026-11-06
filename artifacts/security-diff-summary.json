@@ -1,0 +1,81 @@
+{
+  "files": [
+    {
+      "file": "backend/AEHotel.sln",
+      "additions": 14,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.API/Controllers/UsersController.cs",
+      "additions": 35,
+      "deletions": 25
+    },
+    {
+      "file": "backend/AEHotel.API/Controllers/AdminController.cs",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "file": "backend/AEHotel.Service/Services/AdminService.cs",
+      "additions": 26,
+      "deletions": 24
+    },
+    {
+      "file": "backend/AEHotel.Service/Services/Interfaces/IAdminService.cs",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "file": "backend/AEHotel.Service/DependencyInjection.cs",
+      "additions": 2,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.Service/Security/UserManagementPolicy.cs",
+      "additions": 45,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.SecurityTests/AEHotel.SecurityTests.csproj",
+      "additions": 17,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.SecurityTests/SecurityApp.cs",
+      "additions": 127,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.SecurityTests/UserManagementTests.cs",
+      "additions": 221,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.SecurityTests/frontend-security.mjs",
+      "additions": 124,
+      "deletions": 0
+    },
+    {
+      "file": "backend/AEHotel.SecurityTests/README.md",
+      "additions": 30,
+      "deletions": 0
+    },
+    {
+      "file": "frontend/src/api/auth.js",
+      "additions": 27,
+      "deletions": 2
+    },
+    {
+      "file": "frontend/src/pages/Admin/Staff/AdminStaff.jsx",
+      "additions": 17,
+      "deletions": 8
+    },
+    {
+      "file": "frontend/src/pages/Admin/Users/AdminUsers.jsx",
+      "additions": 12,
+      "deletions": 4
+    }
+  ],
+  "additions": 699,
+  "deletions": 65
+}

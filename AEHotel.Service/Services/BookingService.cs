@@ -169,7 +169,9 @@ public class BookingService : IBookingService
         var hotelRequest = new BookingRequest
         {
             HotelId = booking.HotelId,
-            RoomId = booking.RoomId,
+            RoomId = booking.Rooms.Count == 0 ? booking.RoomId : null,
+            RoomIds = booking.Rooms.Count == 0 ? null : booking.Rooms.Select(r => r.RoomId).ToList(),
+            Children = Math.Min(booking.Rooms.Sum(r => r.Children), Math.Max(0, request.Guests - 1)),
             GuestName = booking.GuestName,
             GuestEmail = booking.GuestEmail,
             CheckIn = request.CheckIn,
@@ -326,64 +328,85 @@ public class BookingService : IBookingService
         }
     }
 
+    public Task<HotelStayQuote> QuoteHotelAsync(int hotelId, HotelStayRequest request, CancellationToken cancellationToken = default)
+        => QuoteHotelAsync(hotelId, request, null, false, cancellationToken);
+
+    private async Task<HotelStayQuote> QuoteHotelAsync(int hotelId, HotelStayRequest request, int? excludeBookingId, bool forBooking, CancellationToken cancellationToken)
+    {
+        if (request.CheckIn is not DateOnly arrival || request.CheckOut is not DateOnly departure ||
+            arrival < DateOnly.FromDateTime(DateTime.UtcNow) || departure <= arrival)
+            throw new ValidationException("Valid arrival and departure dates are required.");
+
+        var ids = request.RoomIds ?? (request.RoomId.HasValue ? [request.RoomId.Value] : []);
+        if (ids.Count == 0 || ids.Any(id => id < 1) || ids.Distinct().Count() != ids.Count ||
+            (request.RoomId.HasValue && (ids.Count != 1 || request.RoomId != ids[0])))
+            throw new ValidationException("Select distinct room IDs from one hotel.");
+        var party = StayParty.From(request.Adults, request.Children, request.Rooms ?? ids.Count, request.Guests);
+        if (party.Rooms != ids.Count)
+            throw new ValidationException("The number of selected rooms must match the requested count.");
+
+        if (!await _hotels.ExistsAsync(hotelId, cancellationToken))
+            throw new NotFoundException($"Hotel with id {hotelId} was not found.");
+
+        var selected = new List<Room>(ids.Count);
+        // Consistent lock order for overlapping selections in the create/update transaction.
+        var sortedIds = ids.Order().ToArray();
+        if (forBooking)
+        {
+            foreach (int id in sortedIds)
+                await _bookings.LockRoomForBookingAsync(id, cancellationToken);
+        }
+        foreach (int id in sortedIds)
+        {
+            var room = await _rooms.GetByIdAsync(id, false, cancellationToken)
+                ?? throw new NotFoundException($"Room {id} was not found.");
+            if (room.HotelId != hotelId || room.IsDeleted || room.Hotel?.IsDeleted != false || !room.Available)
+                throw new ValidationException($"Room {id} is not available at this hotel.");
+            if (await _bookings.HasHotelOverlapAsync(id, arrival, departure, excludeBookingId, cancellationToken) ||
+                await _reservations.HasOverlapAsync(id, arrival, departure, null, cancellationToken))
+                throw new ValidationException($"Room {id} is already reserved for these dates.");
+            selected.Add(room);
+        }
+        var allocation = party.Allocate(selected.Select(room => room.Capacity).ToList());
+        var lines = selected.Select((room, index) =>
+        {
+            var (adults, children) = allocation[index];
+            var price = StayPriceCalculator.Calculate(room.PricePerNight, arrival, departure, adults + children);
+            return new StayRoom(room.Id, room.Name, adults, children, room.PricePerNight, price.Total);
+        }).ToList();
+        return new HotelStayQuote(departure.DayNumber - arrival.DayNumber, lines.Sum(line => line.Total), lines);
+    }
+
     private async Task ApplyHotelAsync(Booking booking, BookingRequest request, int? excludeBookingId, CancellationToken cancellationToken)
     {
-        if (!request.HotelId.HasValue || !request.RoomId.HasValue || !request.CheckIn.HasValue || !request.CheckOut.HasValue)
+        int hotelId = request.HotelId ?? throw new ValidationException("Hotel is required.");
+        var quote = await QuoteHotelAsync(hotelId, request, excludeBookingId, true, cancellationToken);
+        if (request.ExpectedStayTotal is decimal expected && expected != quote.Total)
+            throw new ValidationException("Qiymət dəyişib. Otaq seçiminə qayıdaraq yeni qiyməti təsdiqləyin.");
+
+        foreach (var line in quote.Rooms)
         {
-            throw new ValidationException("Hotel, room, and stay dates are required.");
+            var stay = booking.Rooms.SingleOrDefault(r => r.RoomId == line.RoomId);
+            if (stay is null)
+            {
+                stay = new BookingRoom { RoomId = line.RoomId };
+                booking.Rooms.Add(stay);
+            }
+            stay.RoomName = line.RoomName;
+            stay.Adults = line.Adults;
+            stay.Children = line.Children;
+            stay.PricePerNight = line.PricePerNight;
         }
-
-        if (request.CheckOut <= request.CheckIn)
-        {
-            throw new ValidationException("Check-out date must be after the check-in date.");
-        }
-
-        if (request.CheckIn.Value < DateOnly.FromDateTime(DateTime.UtcNow))
-        {
-            throw new ValidationException("Check-in date cannot be in the past.");
-        }
-
-        if (!await _hotels.ExistsAsync(request.HotelId.Value, cancellationToken))
-        {
-            throw new NotFoundException($"Hotel with id {request.HotelId} was not found.");
-        }
-
-        var room = await _rooms.GetByIdAsync(request.RoomId.Value, tracking: false, cancellationToken)
-            ?? throw new NotFoundException($"Room with id {request.RoomId} was not found.");
-
-        if (room.HotelId != request.HotelId)
-        {
-            throw new ValidationException("The selected room does not belong to the selected hotel.");
-        }
-
-        if (request.Guests > room.Capacity)
-        {
-            throw new ValidationException($"This room allows at most {room.Capacity} guests.");
-        }
-
-        if (!room.Available)
-        {
-            throw new ValidationException("This room is not available for booking.");
-        }
-
-        if (await _bookings.HasHotelOverlapAsync(room.Id, request.CheckIn.Value, request.CheckOut.Value, excludeBookingId, cancellationToken) ||
-            await _reservations.HasOverlapAsync(room.Id, request.CheckIn.Value, request.CheckOut.Value, excludeReservationId: null, cancellationToken))
-        {
-            throw new ValidationException("The room is already reserved for the selected dates.");
-        }
-
-        var price = StayPriceCalculator.Calculate(room.PricePerNight, request.CheckIn.Value, request.CheckOut.Value, request.Guests);
-        var hotelTitle = await _hotels.GetTitleAsync(room.HotelId, cancellationToken) ?? string.Empty;
-        booking.HotelId = room.HotelId;
-        booking.RoomId = room.Id;
+        booking.HotelId = hotelId;
+        booking.RoomId = quote.Rooms[0].RoomId;
         booking.CheckIn = request.CheckIn;
         booking.CheckOut = request.CheckOut;
-        booking.Guests = request.Guests;
-        booking.Nights = price.Nights;
-        booking.PricePerNight = room.PricePerNight;
-        await ApplyPricingAsync(booking, price.Total, request, applyAmount: true, cancellationToken);
-        booking.ItemName = room.Name;
-        booking.Location = hotelTitle;
+        booking.Guests = quote.Rooms.Sum(line => line.Adults + line.Children);
+        booking.Nights = quote.Nights;
+        booking.PricePerNight = quote.Rooms.Sum(line => line.PricePerNight);
+        await ApplyPricingAsync(booking, quote.Total, request, applyAmount: true, cancellationToken);
+        booking.ItemName = quote.Rooms[0].RoomName;
+        booking.Location = await _hotels.GetTitleAsync(hotelId, cancellationToken) ?? string.Empty;
     }
 
     private async Task ApplyFlightAsync(Booking booking, BookingRequest request, CancellationToken cancellationToken)
@@ -713,6 +736,13 @@ public class BookingService : IBookingService
 
     private static BookingResponse Map(Booking booking)
     {
+        var rooms = booking.Rooms.OrderBy(r => r.RoomId).Select(r => new StayRoom(r.RoomId, r.RoomName,
+            r.Adults, r.Children, r.PricePerNight, StayPriceCalculator.Calculate(r.PricePerNight,
+                booking.CheckIn!.Value, booking.CheckOut!.Value, r.Adults + r.Children).Total)).ToList();
+        if (rooms.Count == 0 && booking.RoomId is int legacyId && booking.CheckIn is DateOnly arrival && booking.CheckOut is DateOnly departure)
+            rooms.Add(new StayRoom(legacyId, booking.Room?.Name ?? booking.ItemName, booking.Guests, 0,
+                booking.PricePerNight, StayPriceCalculator.Calculate(booking.PricePerNight, arrival, departure, booking.Guests).Total));
+        var roomNames = rooms.Count > 0 ? string.Join(", ", rooms.Select(r => r.RoomName)) : booking.ItemName;
         return new BookingResponse
         {
             Id = booking.Id,
@@ -722,7 +752,8 @@ public class BookingService : IBookingService
             HotelId = booking.HotelId,
             HotelName = booking.Hotel?.Title ?? (booking.BookingType == "hotel" ? booking.Location : string.Empty),
             RoomId = booking.RoomId,
-            RoomName = booking.Room?.Name ?? booking.ItemName,
+            Rooms = rooms,
+            RoomName = roomNames,
             FlightId = booking.FlightId,
             FlightNumber = booking.Flight?.FlightNumber ?? string.Empty,
             TourId = booking.TourId,
@@ -738,7 +769,7 @@ public class BookingService : IBookingService
             TotalPrice = booking.TotalPrice,
             CouponCode = booking.CouponCode,
             DiscountAmount = booking.DiscountAmount,
-            ItemName = booking.ItemName,
+            ItemName = rooms.Count > 0 ? roomNames : booking.ItemName,
             Location = booking.Location,
             SpecialRequests = booking.SpecialRequests,
             PaymentMethod = booking.Payment?.Method ?? string.Empty,

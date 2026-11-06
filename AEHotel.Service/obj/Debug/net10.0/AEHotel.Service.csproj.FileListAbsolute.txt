@@ -1,0 +1,89 @@
+C:\Windows\Temp\aehotel-out\AEHotel.Service.deps.json
+C:\Windows\Temp\aehotel-out\AEHotel.Service.dll
+C:\Windows\Temp\aehotel-out\AEHotel.Service.pdb
+C:\Windows\Temp\aehotel-hotelroom\AEHotel.Service.deps.json
+C:\Windows\Temp\aehotel-hotelroom\AEHotel.Service.dll
+C:\Windows\Temp\aehotel-hotelroom\AEHotel.Service.pdb
+C:\Users\Public\aehotel-out\AEHotel.Service.deps.json
+C:\Users\Public\aehotel-out\AEHotel.Service.dll
+C:\Users\Public\aehotel-out\AEHotel.Service.pdb
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Service.deps.json
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Service.dll
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Service.pdb
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Domain.dll
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Repository.dll
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Domain.pdb
+Z:\AEHotel.Service\bin\Debug\net10.0\AEHotel.Repository.pdb
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.csproj.AssemblyReference.cache
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.GeneratedMSBuildEditorConfig.editorconfig
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.AssemblyInfoInputs.cache
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.AssemblyInfo.cs
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.csproj.CoreCompileInputs.cache
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.sourcelink.json
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel..D6BBAC94.Up2Date
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.dll
+Z:\AEHotel.Service\obj\Debug\net10.0\refint\AEHotel.Service.dll
+Z:\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.pdb
+Z:\AEHotel.Service\obj\Debug\net10.0\ref\AEHotel.Service.dll
+Z:\AEHotel.API\bin\run5080\AEHotel.Service.deps.json
+Z:\AEHotel.API\bin\run5080\AEHotel.Service.dll
+Z:\AEHotel.API\bin\run5080\AEHotel.Service.pdb
+C:\tmp\apiout\LatoFont\Lato-Black.ttf
+C:\tmp\apiout\LatoFont\Lato-BlackItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-Bold.ttf
+C:\tmp\apiout\LatoFont\Lato-BoldItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-ExtraBold.ttf
+C:\tmp\apiout\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-ExtraLight.ttf
+C:\tmp\apiout\LatoFont\Lato-ExtraLightItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-Italic.ttf
+C:\tmp\apiout\LatoFont\Lato-Light.ttf
+C:\tmp\apiout\LatoFont\Lato-LightItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-Medium.ttf
+C:\tmp\apiout\LatoFont\Lato-MediumItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-Regular.ttf
+C:\tmp\apiout\LatoFont\Lato-SemiBold.ttf
+C:\tmp\apiout\LatoFont\Lato-SemiBoldItalic.ttf
+C:\tmp\apiout\LatoFont\Lato-Thin.ttf
+C:\tmp\apiout\LatoFont\Lato-ThinItalic.ttf
+C:\tmp\apiout\LatoFont\OFL.txt
+C:\tmp\apiout\AEHotel.Service.deps.json
+C:\tmp\apiout\AEHotel.Service.dll
+C:\tmp\apiout\AEHotel.Service.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Black.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-BlackItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Bold.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-BoldItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-ExtraBold.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-ExtraLight.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-ExtraLightItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Italic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Light.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-LightItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Medium.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-MediumItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Regular.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-SemiBold.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-SemiBoldItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-Thin.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\Lato-ThinItalic.ttf
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\LatoFont\OFL.txt
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Service.deps.json
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Service.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Service.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Repository.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\bin\Debug\net10.0\AEHotel.Repository.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.csproj.AssemblyReference.cache
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.AssemblyInfoInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.AssemblyInfo.cs
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.csproj.CoreCompileInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.sourcelink.json
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel..D6BBAC94.Up2Date
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\refint\AEHotel.Service.dll
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\AEHotel.Service.pdb
+C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Service\obj\Debug\net10.0\ref\AEHotel.Service.dll

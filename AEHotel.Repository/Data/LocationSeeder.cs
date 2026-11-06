@@ -61,12 +61,17 @@ public static class LocationSeeder
             .ThenInclude(city => city.TouristPlaces)
             .ToListAsync();
 
-        foreach (var (name, iso, cities) in Catalog)
+        // Populate demo defaults only when initializing a new catalog.
+        var initializeCatalog = countries.Count == 0;
+        if (initializeCatalog)
         {
-            var country = Ensure(context, countries, name, iso);
-            foreach (var city in cities)
+            foreach (var (name, iso, cities) in Catalog)
             {
-                EnsureCity(country, city);
+                var country = Ensure(context, countries, name, iso);
+                foreach (var city in cities)
+                {
+                    EnsureCity(country, city);
+                }
             }
         }
 
@@ -92,14 +97,17 @@ public static class LocationSeeder
             }
         }
 
-        foreach (var (cityName, places) in PlaceCatalog)
+        if (initializeCatalog)
         {
-            foreach (var city in countries.SelectMany(item => item.Cities)
-                         .Where(item => string.Equals(item.Name, cityName, StringComparison.OrdinalIgnoreCase)))
+            foreach (var (cityName, places) in PlaceCatalog)
             {
-                foreach (var place in places)
+                foreach (var city in countries.SelectMany(item => item.Cities)
+                             .Where(item => string.Equals(item.Name, cityName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    EnsurePlace(city, place);
+                    foreach (var place in places)
+                    {
+                        EnsurePlace(city, place);
+                    }
                 }
             }
         }

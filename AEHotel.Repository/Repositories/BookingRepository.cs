@@ -32,15 +32,23 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task LockRoomForBookingAsync(int roomId, CancellationToken cancellationToken)
+    {
+        // Call in the write transaction, in ascending ID order, before checking occupancy.
+        if (Context.Database.IsSqlServer())
+            await Context.Rooms.FromSqlInterpolated($"SELECT * FROM [Rooms] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {roomId}")
+                .AsNoTracking().Select(room => room.Id).ToListAsync(cancellationToken);
+    }
+
     public Task<bool> HasHotelOverlapAsync(int roomId, DateOnly checkIn, DateOnly checkOut, int? excludeBookingId, CancellationToken cancellationToken = default)
     {
         return ActiveHotelStays(checkIn, checkOut, excludeBookingId)
-            .AnyAsync(booking => booking.RoomId == roomId, cancellationToken);
+            .AnyAsync(booking => booking.RoomId == roomId || booking.Rooms.Any(stay => stay.RoomId == roomId), cancellationToken);
     }
 
     public Task<bool> ExistsForRoomAsync(int roomId, CancellationToken cancellationToken = default)
     {
-        return Context.Bookings.AnyAsync(booking => booking.RoomId == roomId, cancellationToken);
+        return Context.Bookings.AnyAsync(booking => booking.RoomId == roomId || booking.Rooms.Any(stay => stay.RoomId == roomId), cancellationToken);
     }
 
     public Task<bool> ExistsForHotelAsync(int hotelId, CancellationToken cancellationToken = default)
@@ -60,10 +68,11 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
 
     public async Task<List<int>> GetBusyRoomIdsAsync(DateOnly checkIn, DateOnly checkOut, CancellationToken cancellationToken = default)
     {
-        return await ActiveHotelStays(checkIn, checkOut, null)
+        var active = ActiveHotelStays(checkIn, checkOut, null);
+        return await active
             .Where(booking => booking.RoomId != null)
             .Select(booking => booking.RoomId!.Value)
-            .Distinct()
+            .Union(active.SelectMany(booking => booking.Rooms.Select(stay => stay.RoomId)))
             .ToListAsync(cancellationToken);
     }
 
@@ -94,6 +103,7 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
         IQueryable<Booking> query = Context.Bookings
             .Include(booking => booking.Hotel)
             .Include(booking => booking.Room)
+            .Include(booking => booking.Rooms)
             .Include(booking => booking.Flight)
             .Include(booking => booking.Tour)
             .Include(booking => booking.Payment);

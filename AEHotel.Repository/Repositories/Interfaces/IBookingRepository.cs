@@ -1,4 +1,5 @@
 using AEHotel.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AEHotel.Repository.Repositories.Interfaces;
 
@@ -24,7 +25,13 @@ public interface IBookingRepository
 
     Task<int> CountTourGuestsAsync(int tourId, DateOnly travelDate, int? excludeBookingId, CancellationToken cancellationToken = default);
 
+    Task<int> CountFlightSeatsAsync(int flightId, CancellationToken cancellationToken = default);
+
     Task AddAsync(Booking booking, CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    Task<IDbContextTransaction> BeginTransactionAsync(System.Data.IsolationLevel isolationLevel, CancellationToken cancellationToken = default);
+
+    IExecutionStrategy GetExecutionStrategy();
 }

@@ -67,7 +67,9 @@ public static class IdentitySeeder
         }
 
         var user = await users.FindByEmailAsync(email);
-        if (user is null)
+        var isNewUser = user is null;
+        
+        if (isNewUser)
         {
             user = new AppUser
             {
@@ -87,12 +89,16 @@ public static class IdentitySeeder
                 throw new InvalidOperationException($"User {email} could not be seeded: " +
                     string.Join(" ", created.Errors.Select(error => error.Description)));
             }
-        }
 
-        if (!await users.IsInRoleAsync(user, role))
-        {
-            await users.AddToRoleAsync(user, role);
+            // Only add role for new users
+            var addRoleResult = await users.AddToRoleAsync(user, role);
+            if (!addRoleResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Role {role} could not be assigned to {email}: " +
+                    string.Join(" ", addRoleResult.Errors.Select(error => error.Description)));
+            }
         }
+        // For existing users, do NOT modify their roles - respect admin changes
 
         // A seeded staff account keeps the hotel an admin gave it. The configured hotel is only applied when the
         // account has none, or its hotel no longer exists (ids change when the catalog is reseeded).

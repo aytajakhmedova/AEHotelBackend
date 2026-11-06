@@ -11,6 +11,7 @@ public class PaymentService : IPaymentService
     {
         "pending",
         "paid",
+        "failed",
         "refunded",
         "cancelled"
     };
@@ -40,11 +41,42 @@ public class PaymentService : IPaymentService
         var next = status.Trim().ToLowerInvariant();
         if (!AllowedStatuses.Contains(next))
         {
-            throw new ValidationException("Payment status must be pending, paid, refunded, or cancelled.");
+            throw new ValidationException("Payment status must be pending, paid, failed, refunded, or cancelled.");
         }
 
         var payment = await _payments.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Payment with id {id} was not found.");
+
+        // Validate status transition logic
+        var currentStatus = payment.Status.ToLowerInvariant();
+        
+        // Prevent invalid transitions
+        if (currentStatus == "refunded" || currentStatus == "cancelled")
+        {
+            throw new ValidationException("Refunded və ya cancelled ödənişin statusunu dəyişmək olmaz.");
+        }
+
+        if (currentStatus == "paid" && next is not ("refunded" or "paid"))
+        {
+            throw new ValidationException("Paid ödəniş yalnız refunded statusa keçə bilər.");
+        }
+
+        // Check booking status compatibility
+        if (payment.Booking != null)
+        {
+            var bookingStatus = payment.Booking.Status.ToLowerInvariant();
+            
+            if (bookingStatus == "cancelled" && next == "paid")
+            {
+                throw new ValidationException("Cancelled rezervasiya üçün ödəniş paid edilə bilməz.");
+            }
+
+            if (bookingStatus != "cancelled" && next == "refunded")
+            {
+                throw new ValidationException("Yalnız cancelled rezervasiya üçün refund edilə bilər.");
+            }
+        }
+
         payment.Status = next;
         await _payments.SaveChangesAsync(cancellationToken);
         return Map(payment);
@@ -57,6 +89,10 @@ public class PaymentService : IPaymentService
             Id = payment.Id,
             BookingId = payment.BookingId,
             BookingCode = payment.Booking?.Code ?? string.Empty,
+            GuestName = payment.Booking?.GuestName ?? string.Empty,
+            GuestEmail = payment.Booking?.GuestEmail ?? string.Empty,
+            ItemName = payment.Booking?.ItemName ?? string.Empty,
+            BookingType = payment.Booking?.BookingType ?? string.Empty,
             Method = payment.Method,
             Amount = payment.Amount,
             DepositPercent = payment.DepositPercent,

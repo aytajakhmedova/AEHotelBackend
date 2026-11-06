@@ -7,6 +7,7 @@ using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Service.Exceptions;
 using AEHotel.Service.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace AEHotel.Service.Services;
 
@@ -90,41 +91,63 @@ public class BookingService : IBookingService
 
         ValidateGuest(request);
         var bookingType = NormalizeType(request.BookingType);
-        var booking = new Booking
-        {
-            Code = CreateCode(),
-            BookingType = bookingType,
-            Status = "confirmed",
-            UserId = userId,
-            GuestName = request.GuestName.Trim(),
-            GuestEmail = request.GuestEmail.Trim(),
-            GuestPhone = request.GuestPhone?.Trim() ?? string.Empty,
-            SpecialRequests = request.SpecialRequests?.Trim() ?? string.Empty,
-            Guests = request.Guests,
-            CreatedAt = DateTime.UtcNow
-        };
 
-        if (bookingType == "hotel")
+        // Use serializable transaction for booking creation to prevent race conditions
+        var strategy = _bookings.GetExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await ApplyHotelAsync(booking, request, excludeBookingId: null, cancellationToken);
-        }
-        else if (bookingType == "flight")
-        {
-            await ApplyFlightAsync(booking, request, cancellationToken);
-        }
-        else
-        {
-            await ApplyTourAsync(booking, request, excludeBookingId: null, cancellationToken);
-        }
+            await using var transaction = await _bookings.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+            try
+            {
+                var booking = new Booking
+                {
+                    Code = CreateCode(),
+                    BookingType = bookingType,
+                    Status = "confirmed",
+                    UserId = userId,
+                    GuestName = request.GuestName.Trim(),
+                    GuestEmail = request.GuestEmail.Trim(),
+                    GuestPhone = request.GuestPhone?.Trim() ?? string.Empty,
+                    SpecialRequests = request.SpecialRequests?.Trim() ?? string.Empty,
+                    Guests = request.Guests,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-        booking.Payment = CreatePayment(request, booking.TotalPrice);
-        await _bookings.AddAsync(booking, cancellationToken);
-        await _bookings.SaveChangesAsync(cancellationToken);
+                if (bookingType == "hotel")
+                {
+                    await ApplyHotelAsync(booking, request, excludeBookingId: null, cancellationToken);
+                }
+                else if (bookingType == "flight")
+                {
+                    await ApplyFlightAsync(booking, request, cancellationToken);
+                }
+                else
+                {
+                    await ApplyTourAsync(booking, request, excludeBookingId: null, cancellationToken);
+                }
 
-        var saved = await _bookings.GetByIdAsync(booking.Id, tracking: false, cancellationToken);
-        var response = await MapWithSuggestionsAsync(saved!, cancellationToken);
-        response.EmailSent = await TrySendConfirmationAsync(response, cancellationToken);
-        return response;
+                booking.Payment = CreatePayment(request, booking.TotalPrice);
+                await _bookings.AddAsync(booking, cancellationToken);
+                await _bookings.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+
+                var saved = await _bookings.GetByIdAsync(booking.Id, tracking: false, cancellationToken);
+                var response = await MapWithSuggestionsAsync(saved!, cancellationToken);
+                response.EmailSent = await TrySendConfirmationAsync(response, cancellationToken);
+                return response;
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                _logger.LogWarning(ex, "Concurrency conflict during booking creation for user {UserId}", userId);
+                throw new ValidationException("Bu rezervasiya artıq başqa istifadəçi tərəfindən edilib. Zəhmət olmasa yenidən cəhd edin.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 
     public async Task<BookingResponse> UpdateAsync(int id, BookingUpdateRequest request, string userId, bool isAdmin, CancellationToken cancellationToken = default)
@@ -155,30 +178,52 @@ public class BookingService : IBookingService
             SpecialRequests = request.SpecialRequests
         };
 
-        await ApplyHotelAsync(booking, hotelRequest, id, cancellationToken);
-        if (request.SpecialRequests != null)
+        // Use serializable transaction for update to prevent race conditions
+        var strategy = _bookings.GetExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            booking.SpecialRequests = request.SpecialRequests.Trim();
-        }
-
-        if (booking.Payment != null)
-        {
-            booking.Payment.Amount = booking.TotalPrice;
-            var percent = booking.Payment.DepositPercent;
-            if (percent <= 0 && booking.Payment.Method == "card")
+            await using var transaction = await _bookings.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+            try
             {
-                percent = 100;
-            }
+                await ApplyHotelAsync(booking, hotelRequest, id, cancellationToken);
+                if (request.SpecialRequests != null)
+                {
+                    booking.SpecialRequests = request.SpecialRequests.Trim();
+                }
 
-            if (percent > 0)
+                if (booking.Payment != null)
+                {
+                    booking.Payment.Amount = booking.TotalPrice;
+                    var percent = booking.Payment.DepositPercent;
+                    if (percent <= 0 && booking.Payment.Method == "card")
+                    {
+                        percent = 100;
+                    }
+
+                    if (percent > 0)
+                    {
+                        ApplyDeposit(booking.Payment, booking.TotalPrice, percent);
+                    }
+                }
+
+                await _bookings.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+
+                var saved = await _bookings.GetByIdAsync(id, tracking: false, cancellationToken);
+                return Map(saved!);
+            }
+            catch (DbUpdateConcurrencyException ex)
             {
-                ApplyDeposit(booking.Payment, booking.TotalPrice, percent);
+                await transaction.RollbackAsync(cancellationToken);
+                _logger.LogWarning(ex, "Concurrency conflict during booking update for booking {BookingId}", id);
+                throw new ValidationException("Bu rezervasiya artıq dəyişdirilib. Zəhmət olmasa səhifəni yeniləyib yenidən cəhd edin.");
             }
-        }
-
-        await _bookings.SaveChangesAsync(cancellationToken);
-        var saved = await _bookings.GetByIdAsync(id, tracking: false, cancellationToken);
-        return Map(saved!);
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 
     public async Task<BookingResponse> UpdateStatusAsync(int id, string status, string userId, bool isAdmin, CancellationToken cancellationToken = default)
@@ -202,15 +247,42 @@ public class BookingService : IBookingService
                 throw new ValidationException("Check-in günü və ya sonra rezervasiyanı ləğv etmək olmaz.");
             }
 
-            await ReleaseInventoryAsync(booking, cancellationToken);
-            if (booking.Payment != null && booking.Payment.Status == "paid")
+            // Use serializable transaction for cancellation to prevent race conditions
+            var strategy = _bookings.GetExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                booking.Payment.Status = "refunded";
-            }
-            else if (booking.Payment != null)
-            {
-                booking.Payment.Status = "cancelled";
-            }
+                await using var transaction = await _bookings.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+                try
+                {
+                    await ReleaseInventoryAsync(booking, cancellationToken);
+                    if (booking.Payment != null && booking.Payment.Status == "paid")
+                    {
+                        booking.Payment.Status = "refunded";
+                    }
+                    else if (booking.Payment != null)
+                    {
+                        booking.Payment.Status = "cancelled";
+                    }
+
+                    booking.Status = next;
+                    await _bookings.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+
+                    var saved = await _bookings.GetByIdAsync(id, tracking: false, cancellationToken);
+                    return Map(saved!);
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    _logger.LogWarning(ex, "Concurrency conflict during booking cancellation for booking {BookingId}", id);
+                    throw new ValidationException("Bu rezervasiya artıq dəyişdirilib. Zəhmət olmasa səhifəni yeniləyib yenidən cəhd edin.");
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    throw;
+                }
+            });
         }
 
         booking.Status = next;
@@ -324,6 +396,11 @@ public class BookingService : IBookingService
         var flight = await _flights.GetByIdAsync(request.FlightId.Value, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Flight with id {request.FlightId} was not found.");
 
+        if (flight.DepartureAt <= DateTime.UtcNow)
+        {
+            throw new ValidationException("Keçmiş tarixli uçuş rezervasiya edilə bilməz.");
+        }
+
         if (!string.IsNullOrWhiteSpace(request.TravelCountry) &&
             !TravelCountry.Same(TravelCountry.OfFlight(flight), request.TravelCountry))
         {
@@ -332,7 +409,7 @@ public class BookingService : IBookingService
 
         if (flight.SeatsAvailable < request.Guests)
         {
-            throw new ValidationException("Not enough seats are left on this flight.");
+            throw new ValidationException("Bu uçuşda kifayət qədər boş yer yoxdur.");
         }
 
         flight.SeatsAvailable -= request.Guests;
@@ -351,6 +428,11 @@ public class BookingService : IBookingService
         if (!request.TourId.HasValue || !request.TravelDate.HasValue)
         {
             throw new ValidationException("Tour and travel date are required.");
+        }
+
+        if (request.TravelDate.Value < DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            throw new ValidationException("Keçmiş tarixli tur rezervasiya edilə bilməz.");
         }
 
         var tour = await _tours.GetByIdAsync(request.TourId.Value, tracking: false, cancellationToken)
@@ -406,13 +488,12 @@ public class BookingService : IBookingService
     private static Payment CreatePayment(BookingRequest request, decimal amount)
     {
         var method = NormalizePaymentMethod(request.PaymentMethod);
-        var needsCard = method is "card" or "hotel";
-        var digits = needsCard
-            ? new string((request.CardNumber ?? string.Empty).Where(char.IsDigit).ToArray())
-            : string.Empty;
-
-        if (needsCard)
+        
+        // Demo payment system - we don't store real card details
+        // Only validate that card info is provided for card/hotel payments
+        if (method is "card" or "hotel")
         {
+            var digits = new string((request.CardNumber ?? string.Empty).Where(char.IsDigit).ToArray());
             if (digits.Length < 13)
             {
                 throw new ValidationException("Kart nömrəsi tələb olunur.");
@@ -429,8 +510,8 @@ public class BookingService : IBookingService
             Method = method,
             Amount = amount,
             Status = "pending",
-            CardLast4 = digits.Length >= 4 ? digits[^4..] : string.Empty,
-            CardHolder = needsCard ? request.CardHolder?.Trim() ?? string.Empty : string.Empty,
+            CardLast4 = string.Empty, // Demo system - don't store card details
+            CardHolder = string.Empty, // Demo system - don't store cardholder name
             CreatedAt = DateTime.UtcNow
         };
 
@@ -508,7 +589,10 @@ public class BookingService : IBookingService
 
     private async Task ApplyPricingAsync(Booking booking, decimal listTotal, BookingRequest request, bool applyAmount, CancellationToken cancellationToken)
     {
-        var afterCombo = await ApplyComboPriceAsync(listTotal, request.BundleCombo, applyAmount, cancellationToken);
+        // BundleCombo discount cannot be securely verified in backend because each booking is created separately
+        // Hotel bookings don't include FlightId/TourId, and vice versa
+        // Only coupon codes are verified and applied
+        var afterCombo = listTotal; // Ignore BundleCombo for security - frontend handles package pricing separately
         var afterCoupon = afterCombo;
         var couponCode = string.Empty;
         if (!string.IsNullOrWhiteSpace(request.CouponCode))
@@ -522,12 +606,6 @@ public class BookingService : IBookingService
         booking.TotalPrice = afterCoupon;
         booking.CouponCode = couponCode;
         booking.DiscountAmount = Math.Max(0, Math.Round(listTotal - afterCoupon, 2, MidpointRounding.AwayFromZero));
-    }
-
-    private async Task<decimal> ApplyComboPriceAsync(decimal total, string? combo, bool applyAmount, CancellationToken cancellationToken)
-    {
-        var package = await _discounts.GetActiveByComboAsync(combo, cancellationToken);
-        return package is null ? total : ApplyPackage(total, package, applyAmount);
     }
 
     private static decimal ApplyPackage(decimal total, DiscountPackageResponse package, bool applyAmount)

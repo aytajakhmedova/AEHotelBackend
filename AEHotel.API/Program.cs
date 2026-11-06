@@ -8,7 +8,9 @@ using AEHotel.Service;
 using AEHotel.Service.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
@@ -76,6 +78,56 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddApplicationServices();
 
+// Add rate limiting to prevent abuse
+builder.Services.AddRateLimiter(options =>
+{
+    // Stricter limits for authentication endpoints
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var path = context.Request.Path.ToString();
+        
+        // Auth endpoints: 5 per minute per IP
+        if (path.StartsWith("/api/auth"))
+        {
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    Window = TimeSpan.FromMinutes(1),
+                    PermitLimit = 5,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
+        }
+        
+        // Email endpoint: 3 per 5 minutes per user
+        if (path.Contains("/email-receipt"))
+        {
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    Window = TimeSpan.FromMinutes(5),
+                    PermitLimit = 3,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
+        }
+        
+        // Default: no limit
+        return RateLimitPartition.GetNoLimiter("default");
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            message = "Çox sayda sorğu göndərdiniz. Zəhmət olmasa bir az gözləyin."
+        }, token);
+    };
+});
+
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 if (allowedOrigins.Length == 0)
 {
@@ -107,7 +159,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var database = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await CatalogSeeder.MigrateAndSeedAsync(database);
+    await database.Database.MigrateAsync(); // Apply migrations first
+    
+    // Only seed demo data in Development environment
+    if (app.Environment.IsDevelopment())
+    {
+        await CatalogSeeder.SeedAsync(database);
+    }
+    
+    // Always seed roles and SuperAdmin (idempotent)
     await IdentitySeeder.SeedAsync(scope.ServiceProvider, app.Configuration);
 }
 
@@ -127,6 +187,7 @@ var contentTypes = new FileExtensionContentTypeProvider();
 contentTypes.Mappings[".jfif"] = "image/jpeg";
 app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = contentTypes });
 app.UseRouting();
+app.UseRateLimiter(); // Enable rate limiting
 app.UseCors("ReactClient");
 app.UseAuthentication();
 app.UseAuthorization();

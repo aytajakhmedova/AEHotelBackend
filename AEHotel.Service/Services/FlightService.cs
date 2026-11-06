@@ -51,6 +51,14 @@ public class FlightService : IFlightService
         await ValidateAsync(request, cancellationToken);
         var flight = await _flights.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Flight with id {id} was not found.");
+        
+        // Check if admin is reducing seat count below booked seats
+        var bookedSeats = await _bookings.CountFlightSeatsAsync(id, cancellationToken);
+        if (request.SeatsAvailable < bookedSeats)
+        {
+            throw new ValidationException($"Cannot reduce available seats to {request.SeatsAvailable}. This flight already has {bookedSeats} confirmed bookings.");
+        }
+        
         Apply(flight, request);
         await _flights.SaveChangesAsync(cancellationToken);
         return Map(flight);

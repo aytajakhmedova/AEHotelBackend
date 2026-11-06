@@ -40,5 +40,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasIndex(item => item.Code)
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL AND [Code] <> ''");
+        
+        // Concurrency token for Flight to prevent overbooking
+        builder.Entity<Flight>()
+            .Property(f => f.RowVersion)
+            .IsRowVersion();
     }
 }

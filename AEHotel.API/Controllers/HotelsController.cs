@@ -13,10 +13,12 @@ namespace AEHotel.API.Controllers;
 public class HotelsController : ControllerBase
 {
     private readonly IHotelService _hotelService;
+    private readonly IWebHostEnvironment _environment;
 
-    public HotelsController(IHotelService hotelService)
+    public HotelsController(IHotelService hotelService, IWebHostEnvironment environment)
     {
         _hotelService = hotelService;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -38,9 +40,15 @@ public class HotelsController : ControllerBase
     }
 
     [HttpGet("debug")]
-    [AllowAnonymous]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult> GetAllDebug(CancellationToken cancellationToken)
     {
+        // Only available in Development environment for security
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+
         var hotels = await _hotelService.GetAllAsync(null, null, null, null, cancellationToken);
         return Ok(new
         {

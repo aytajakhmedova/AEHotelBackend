@@ -1,4 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using AEHotel.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 using System.Text.Encodings.Web;
 using AEHotel.Service.Security;
@@ -13,34 +16,37 @@ public class JwtAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     public const string SchemeName = "Bearer";
 
     private readonly JwtOptions _jwt;
+    private readonly UserManager<AppUser> _users;
 
     public JwtAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        IOptions<JwtOptions> jwt)
+        IOptions<JwtOptions> jwt,
+        UserManager<AppUser> users)
         : base(options, logger, encoder)
     {
         _jwt = jwt.Value;
+        _users = users;
     }
 
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue("Authorization", out var headerValues))
         {
-            return Task.FromResult(AuthenticateResult.NoResult());
+            return AuthenticateResult.NoResult();
         }
 
         var header = headerValues.ToString();
         if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
-            return Task.FromResult(AuthenticateResult.NoResult());
+            return AuthenticateResult.NoResult();
         }
 
         var token = header["Bearer ".Length..].Trim();
         if (string.IsNullOrWhiteSpace(token))
         {
-            return Task.FromResult(AuthenticateResult.Fail("Missing token."));
+            return AuthenticateResult.Fail("Missing token.");
         }
 
         try
@@ -59,11 +65,38 @@ public class JwtAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
                 NameClaimType = System.Security.Claims.ClaimTypes.Name
             }, out _);
 
-            return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name)));
+            // A signed token establishes identity. Current database state establishes permissions.
+            var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = string.IsNullOrWhiteSpace(userId) ? null : await _users.FindByIdAsync(userId);
+            if (user is null || user.IsRestricted)
+            {
+                return AuthenticateResult.Fail("An active user account is required.");
+            }
+
+            var roles = await _users.GetRolesAsync(user);
+            var identity = (ClaimsIdentity)principal.Identity!;
+            foreach (var claim in identity.FindAll(ClaimTypes.Role).Concat(identity.FindAll("assignedHotelId")).ToList())
+            {
+                identity.RemoveClaim(claim);
+            }
+            foreach (var role in roles)
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Role, role));
+            }
+
+            var scoped = !roles.Contains(AppRoles.Admin) && !roles.Contains(AppRoles.SuperAdmin)
+                && (roles.Contains(AppRoles.HotelManager) || roles.Contains(AppRoles.Receptionist));
+            if (scoped && user.AssignedHotelId is > 0)
+            {
+                identity.AddClaim(new Claim("assignedHotelId", user.AssignedHotelId.Value.ToString()));
+            }
+
+            return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
         }
         catch (Exception exception)
         {
-            return Task.FromResult(AuthenticateResult.Fail(exception.Message));
+            return AuthenticateResult.Fail(exception.Message);
         }
     }
 }
+

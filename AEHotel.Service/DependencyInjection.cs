@@ -1,5 +1,6 @@
 using AEHotel.Service.Services;
 using AEHotel.Service.Services.Interfaces;
+using AEHotel.Service.Security;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AEHotel.Service;
@@ -19,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IDiscountService, DiscountService>();
         services.AddScoped<IStayReviewService, StayReviewService>();
+        services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<UserManagementPolicy>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();

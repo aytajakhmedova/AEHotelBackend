@@ -13,6 +13,16 @@ public class PaymentResponse
 
     public string BookingCode { get; set; } = string.Empty;
 
+    public string GuestName { get; set; } = string.Empty;
+
+    public string GuestEmail { get; set; } = string.Empty;
+
+    public string ItemName { get; set; } = string.Empty;
+
+    public string BookingType { get; set; } = string.Empty;
+
+    public string Currency { get; set; } = "AZN";
+
     public string Method { get; set; } = string.Empty;
 
     public decimal Amount { get; set; }

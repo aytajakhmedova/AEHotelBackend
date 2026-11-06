@@ -2,6 +2,7 @@ using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Domain.Entities;
 using AEHotel.Repository.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AEHotel.Repository.Repositories;
 
@@ -78,6 +79,16 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
             .SumAsync(booking => (int?)booking.Guests, cancellationToken) ?? 0;
     }
 
+    public async Task<int> CountFlightSeatsAsync(int flightId, CancellationToken cancellationToken = default)
+    {
+        return await Context.Bookings
+            .Where(booking =>
+                booking.BookingType == "flight" &&
+                booking.FlightId == flightId &&
+                booking.Status != "cancelled")
+            .SumAsync(booking => (int?)booking.Guests, cancellationToken) ?? 0;
+    }
+
     private IQueryable<Booking> Query(bool tracking)
     {
         IQueryable<Booking> query = Context.Bookings
@@ -106,5 +117,15 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
             (excludeBookingId == null || booking.Id != excludeBookingId) &&
             booking.CheckIn < checkOut &&
             checkIn < booking.CheckOut);
+    }
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(System.Data.IsolationLevel isolationLevel, CancellationToken cancellationToken = default)
+    {
+        return Context.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
+    }
+
+    public IExecutionStrategy GetExecutionStrategy()
+    {
+        return Context.Database.CreateExecutionStrategy();
     }
 }

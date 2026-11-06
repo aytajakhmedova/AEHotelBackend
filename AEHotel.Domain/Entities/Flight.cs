@@ -36,4 +36,6 @@ public class Flight : BaseEntity
     public int SeatsAvailable { get; set; }
 
     public bool Refundable { get; set; }
+
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

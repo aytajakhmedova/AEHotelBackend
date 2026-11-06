@@ -57,6 +57,10 @@ namespace AEHotel.Repository.Migrations
                     b.Property<bool>("IsRestricted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("JobTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -405,6 +409,12 @@ namespace AEHotel.Repository.Migrations
 
                     b.Property<bool>("Refundable")
                         .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("SeatsAvailable")
                         .HasColumnType("int");

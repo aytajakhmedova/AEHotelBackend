@@ -4,10 +4,10 @@ namespace AEHotel.Service.Services.Interfaces;
 
 public interface ITourService
 {
-    Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default, string? category = null, string? sort = null);
+    Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default, string? category = null, string? sort = null, int? hotelId = null, bool includePast = false);
     Task<IReadOnlyList<string>> GetCategoriesAsync(CancellationToken cancellationToken = default);
 
-    Task<TourResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<TourResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default, bool includePast = false);
 
     Task<TourResponse> CreateAsync(TourRequest request, CancellationToken cancellationToken = default);
 

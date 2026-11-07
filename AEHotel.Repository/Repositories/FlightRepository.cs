@@ -15,13 +15,14 @@ public class FlightRepository : BaseRepository<Flight>, IFlightRepository
     {
         return await Context.Flights
             .AsNoTracking()
+            .Include(flight => flight.Cabins)
             .OrderBy(flight => flight.DepartureAt)
             .ToListAsync(cancellationToken);
     }
 
     public Task<Flight?> GetByIdAsync(int id, bool tracking, CancellationToken cancellationToken = default)
     {
-        IQueryable<Flight> query = Context.Flights;
+        IQueryable<Flight> query = Context.Flights.Include(flight => flight.Cabins);
         if (!tracking)
         {
             query = query.AsNoTracking();

@@ -31,6 +31,13 @@ public class FlightsController : ControllerBase
         return Ok(flights);
     }
 
+    [HttpGet("popular-destinations")]
+    public async Task<ActionResult<IReadOnlyList<PopularDestinationResponse>>> GetPopularDestinations(
+        [FromQuery] int limit = 4, CancellationToken cancellationToken = default)
+    {
+        return Ok(await _flightService.GetPopularDestinationsAsync(limit, cancellationToken));
+    }
+
     [HttpGet("airports")]
     public async Task<ActionResult<IReadOnlyList<AirportResponse>>> GetAirports(
         [FromQuery] string? origin,

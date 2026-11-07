@@ -13,6 +13,8 @@ public class DiscountPackageConfiguration : IEntityTypeConfiguration<DiscountPac
         entity.Property(item => item.Code).HasMaxLength(40);
         entity.Property(item => item.Percent).HasPrecision(5, 2);
         entity.Property(item => item.Amount).HasPrecision(18, 2);
+        entity.Property(item => item.UserId).HasMaxLength(450);
         entity.HasIndex(item => item.Combo);
+        entity.HasIndex(item => item.UserId);
     }
 }

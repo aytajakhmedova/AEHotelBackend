@@ -10,6 +10,10 @@ public class DiscountService : IDiscountService
 {
     public static readonly string[] Combos = ["hotel_flight", "hotel_tour", "hotel_flight_tour", "coupon"];
 
+    // A guest pays hotel, flight and tour in one checkout, each as its own booking carrying the same coupon.
+    // The first booking marks a personal coupon as used; the bookings of that same checkout may still use it.
+    private static readonly TimeSpan SameCheckout = TimeSpan.FromMinutes(30);
+
     private readonly IDiscountPackageRepository _packages;
 
     public DiscountService(IDiscountPackageRepository packages)
@@ -19,8 +23,9 @@ public class DiscountService : IDiscountService
 
     public async Task<IReadOnlyList<DiscountPackageResponse>> GetAllAsync(CancellationToken cancellationToken = default)
     {
+        // Personal coupons belong to their owners and are not part of the shared list.
         var items = await _packages.GetAllAsync(cancellationToken);
-        return items.Select(Map).ToList();
+        return items.Where(item => item.UserId == null).Select(Map).ToList();
     }
 
     public async Task<IReadOnlyList<DiscountPackageResponse>> GetActiveAsync(CancellationToken cancellationToken = default)
@@ -28,6 +33,7 @@ public class DiscountService : IDiscountService
         var now = DateTime.UtcNow;
         var items = await _packages.GetAllAsync(cancellationToken);
         return items
+            .Where(item => item.UserId == null)
             .Where(item => item.IsActive)
             .Where(item => !item.StartsAt.HasValue || item.StartsAt <= now)
             .Where(item => !item.EndsAt.HasValue || item.EndsAt >= now)
@@ -59,7 +65,7 @@ public class DiscountService : IDiscountService
         return package is null ? null : Map(package);
     }
 
-    public async Task<DiscountPackageResponse?> GetActiveByCodeAsync(string? code, CancellationToken cancellationToken = default)
+    public async Task<DiscountPackageResponse?> GetActiveByCodeAsync(string? code, CancellationToken cancellationToken = default, string? userId = null)
     {
         var key = NormalizeCode(code);
         if (key is null)
@@ -68,8 +74,79 @@ public class DiscountService : IDiscountService
         }
 
         var package = await _packages.GetActiveByCodeAsync(key, DateTime.UtcNow, cancellationToken);
+        if (package?.UserId != null)
+        {
+            // A personal coupon works only for its owner, and only once.
+            if (package.UserId != userId)
+            {
+                return null;
+            }
+
+            if (IsUsed(package))
+            {
+                throw new ValidationException("Bu kupon artıq istifadə olunub.");
+            }
+        }
+
         return package is null ? null : Map(package);
     }
+
+    public async Task<DiscountPackageResponse> CreateWelcomeCouponAsync(string userId, decimal percent, int validMinutes, CancellationToken cancellationToken = default)
+    {
+        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        string code;
+        do
+        {
+            var suffix = new string(Enumerable.Range(0, 6)
+                .Select(_ => alphabet[System.Security.Cryptography.RandomNumberGenerator.GetInt32(alphabet.Length)]).ToArray());
+            code = "WELCOME" + (int)percent + suffix;
+        }
+        while (await _packages.GetByCodeAsync(code, tracking: false, cancellationToken) != null);
+
+        var now = DateTime.UtcNow;
+        var package = new DiscountPackage
+        {
+            Name = $"Xoş gəldin kuponu {(int)percent}%",
+            Combo = "coupon",
+            Code = code,
+            Percent = percent,
+            StartsAt = now,
+            EndsAt = now.AddMinutes(validMinutes),
+            IsActive = true,
+            UserId = userId
+        };
+        await _packages.AddAsync(package, cancellationToken);
+        await _packages.SaveChangesAsync(cancellationToken);
+        return Map(package);
+    }
+
+    public async Task<IReadOnlyList<DiscountPackageResponse>> GetMineAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        return (await _packages.GetAllAsync(cancellationToken))
+            .Where(item => item.UserId == userId && item.IsActive)
+            .OrderByDescending(item => item.Id)
+            .Select(Map)
+            .ToList();
+    }
+
+    public async Task ConsumeAsync(string? code, CancellationToken cancellationToken = default)
+    {
+        var key = NormalizeCode(code);
+        if (key is null)
+        {
+            return;
+        }
+
+        var package = await _packages.GetByCodeAsync(key, tracking: true, cancellationToken);
+        if (package?.UserId != null && package.UsedAt == null)
+        {
+            package.UsedAt = DateTime.UtcNow;
+            await _packages.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static bool IsUsed(DiscountPackage package) =>
+        package.UsedAt.HasValue && DateTime.UtcNow - package.UsedAt.Value > SameCheckout;
 
     public async Task<DiscountPackageResponse> CreateAsync(DiscountPackageRequest request, CancellationToken cancellationToken = default)
     {
@@ -174,7 +251,8 @@ public class DiscountService : IDiscountService
             Amount = package.Amount,
             StartsAt = package.StartsAt,
             EndsAt = package.EndsAt,
-            IsActive = package.IsActive
+            IsActive = package.IsActive,
+            UsedAt = package.UsedAt
         };
     }
 }

@@ -88,12 +88,13 @@ public class BookingRepository : BaseRepository<Booking>, IBookingRepository
             .SumAsync(booking => (int?)booking.Guests, cancellationToken) ?? 0;
     }
 
-    public async Task<int> CountFlightSeatsAsync(int flightId, CancellationToken cancellationToken = default)
+    public async Task<int> CountFlightSeatsAsync(int flightId, string cabinClass, CancellationToken cancellationToken = default)
     {
         return await Context.Bookings
             .Where(booking =>
                 booking.BookingType == "flight" &&
                 booking.FlightId == flightId &&
+                booking.CabinClass == cabinClass &&
                 booking.Status != "cancelled")
             .SumAsync(booking => (int?)booking.Guests, cancellationToken) ?? 0;
     }

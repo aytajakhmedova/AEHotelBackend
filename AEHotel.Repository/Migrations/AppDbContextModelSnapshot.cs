@@ -22,6 +22,32 @@ namespace AEHotel.Repository.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.Airline", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Airlines");
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.AppUser", b =>
                 {
                     b.Property<string>("Id")
@@ -133,6 +159,10 @@ namespace AEHotel.Repository.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CabinClass")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly?>("CheckIn")
                         .HasColumnType("date");
@@ -358,6 +388,13 @@ namespace AEHotel.Repository.Migrations
                     b.Property<DateTime?>("StartsAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -365,6 +402,8 @@ namespace AEHotel.Repository.Migrations
                         .HasFilter("[Code] IS NOT NULL AND [Code] <> ''");
 
                     b.HasIndex("Combo");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("DiscountPackages");
                 });
@@ -455,6 +494,43 @@ namespace AEHotel.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Flights");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.FlightCabin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CabinClass")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("FlightId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SeatsAvailable")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlightId", "CabinClass")
+                        .IsUnique();
+
+                    b.ToTable("FlightCabins");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.Hotel", b =>
@@ -1286,6 +1362,9 @@ namespace AEHotel.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("HotelId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImageFile")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1323,7 +1402,30 @@ namespace AEHotel.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("HotelId");
+
                     b.ToTable("Tours");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.TourCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("TourCategories");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.TouristPlace", b =>
@@ -1547,6 +1649,17 @@ namespace AEHotel.Repository.Migrations
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.FlightCabin", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.Flight", "Flight")
+                        .WithMany("Cabins")
+                        .HasForeignKey("FlightId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Flight");
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.Hotel", b =>
                 {
                     b.HasOne("AEHotel.Domain.Entities.City", "CityRecord")
@@ -1626,6 +1739,16 @@ namespace AEHotel.Repository.Migrations
                         .IsRequired();
 
                     b.Navigation("Booking");
+
+                    b.Navigation("Hotel");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.Tour", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.Hotel", "Hotel")
+                        .WithMany()
+                        .HasForeignKey("HotelId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Hotel");
                 });
@@ -1714,6 +1837,11 @@ namespace AEHotel.Repository.Migrations
             modelBuilder.Entity("AEHotel.Domain.Entities.Country", b =>
                 {
                     b.Navigation("Cities");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.Flight", b =>
+                {
+                    b.Navigation("Cabins");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.Hotel", b =>

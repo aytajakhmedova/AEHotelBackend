@@ -13,12 +13,12 @@ public class TourRepository : BaseRepository<Tour>, ITourRepository
 
     public async Task<IReadOnlyList<Tour>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await Context.Tours.AsNoTracking().OrderBy(tour => tour.Id).ToListAsync(cancellationToken);
+        return await Context.Tours.AsNoTracking().Include(tour => tour.Hotel).OrderBy(tour => tour.Id).ToListAsync(cancellationToken);
     }
 
     public Task<Tour?> GetByIdAsync(int id, bool tracking, CancellationToken cancellationToken = default)
     {
-        IQueryable<Tour> query = Context.Tours;
+        IQueryable<Tour> query = Context.Tours.Include(tour => tour.Hotel);
         if (!tracking)
         {
             query = query.AsNoTracking();

@@ -12,6 +12,8 @@ public static class DependencyInjection
         services.AddScoped<IHotelService, HotelService>();
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IFlightService, FlightService>();
+        services.AddScoped<IAirlineService, AirlineService>();
+        services.AddScoped<ITourCategoryService, TourCategoryService>();
         services.AddScoped<ITourService, TourService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<ITripSuggestionService, TripSuggestionService>();

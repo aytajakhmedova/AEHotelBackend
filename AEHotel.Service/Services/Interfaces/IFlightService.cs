@@ -8,6 +8,8 @@ public interface IFlightService
 
     Task<IReadOnlyList<AirportResponse>> GetAirportsAsync(string? origin, string? destination, DateOnly? date, int? passengers, string? cabin, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<PopularDestinationResponse>> GetPopularDestinationsAsync(int limit, CancellationToken cancellationToken = default);
+
     Task<FlightResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     Task<FlightResponse> CreateAsync(FlightRequest request, CancellationToken cancellationToken = default);

@@ -590,7 +590,6 @@ C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\r
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\AEHotel.API.pdb
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\AEHotel.API.genruntimeconfig.cache
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\ref\AEHotel.API.dll
-C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.API\bin\Debug\net10.0\appsettings.Development.json
 C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.API\bin\Debug\net10.0\appsettings.json
 C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.API\bin\Debug\net10.0\appsettings.Local.json
@@ -842,4 +841,3 @@ C:\temp_ae_out\AEHotel.API.deps.json
 C:\temp_ae_out\AEHotel.API.runtimeconfig.json
 C:\temp_ae_out\AEHotel.API.dll
 C:\temp_ae_out\AEHotel.API.pdb
-C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

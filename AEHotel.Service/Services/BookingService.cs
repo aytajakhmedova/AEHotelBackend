@@ -430,18 +430,37 @@ public class BookingService : IBookingService
             throw new ValidationException("Seçilmiş uçuş bu ölkəyə aid deyil.");
         }
 
-        if (flight.SeatsAvailable < request.Guests)
+        // The guest chooses the class; a flight that sells a single class needs no choice.
+        var wanted = FlightCabins.Normalize(request.CabinClass);
+        if (wanted == null && !string.IsNullOrWhiteSpace(request.CabinClass))
         {
-            throw new ValidationException("Bu uçuşda kifayət qədər boş yer yoxdur.");
+            throw new ValidationException("Səyahət sinfi economy, business və ya first olmalıdır.");
         }
 
-        flight.SeatsAvailable -= request.Guests;
+        var cabin = wanted != null
+            ? flight.Cabins.FirstOrDefault(item => item.CabinClass == wanted)
+            : flight.Cabins.Count == 1 ? flight.Cabins[0] : null;
+        if (cabin == null)
+        {
+            throw new ValidationException(wanted == null
+                ? "Zəhmət olmasa səyahət sinfini seçin."
+                : "Bu uçuşda seçilən sinif satılmır.");
+        }
+
+        if (cabin.SeatsAvailable < request.Guests)
+        {
+            throw new ValidationException("Seçilən sinifdə kifayət qədər boş yer yoxdur.");
+        }
+
+        cabin.SeatsAvailable -= request.Guests;
+        flight.SeatsAvailable = flight.Cabins.Sum(item => item.SeatsAvailable);
+        booking.CabinClass = cabin.CabinClass;
         booking.FlightId = flight.Id;
         booking.CheckIn = DateOnly.FromDateTime(flight.DepartureAt);
         booking.Guests = request.Guests;
         booking.Nights = 0;
-        booking.PricePerNight = flight.Price;
-        await ApplyPricingAsync(booking, flight.Price * request.Guests, request, applyAmount: true, cancellationToken);
+        booking.PricePerNight = cabin.Price;
+        await ApplyPricingAsync(booking, cabin.Price * request.Guests, request, applyAmount: true, cancellationToken);
         booking.ItemName = $"{flight.Airline} {flight.FlightNumber}";
         booking.Location = $"{flight.OriginCity} ({flight.OriginCode}) - {flight.DestinationCity} ({flight.DestinationCode})";
     }
@@ -499,9 +518,12 @@ public class BookingService : IBookingService
         if (booking.BookingType == "flight" && booking.FlightId.HasValue)
         {
             var flight = await _flights.GetByIdAsync(booking.FlightId.Value, tracking: true, cancellationToken);
-            if (flight != null)
+            var cabin = flight?.Cabins.FirstOrDefault(item => item.CabinClass == booking.CabinClass)
+                ?? flight?.Cabins.FirstOrDefault();
+            if (flight != null && cabin != null)
             {
-                flight.SeatsAvailable += booking.Guests;
+                cabin.SeatsAvailable += booking.Guests;
+                flight.SeatsAvailable = flight.Cabins.Sum(item => item.SeatsAvailable);
             }
         }
     }
@@ -620,8 +642,10 @@ public class BookingService : IBookingService
         var couponCode = string.Empty;
         if (!string.IsNullOrWhiteSpace(request.CouponCode))
         {
-            var coupon = await _discounts.GetActiveByCodeAsync(request.CouponCode, cancellationToken)
+            var coupon = await _discounts.GetActiveByCodeAsync(request.CouponCode, cancellationToken, booking.UserId)
                 ?? throw new ValidationException("Kupon kodu keçərsizdir və ya müddəti bitib.");
+            // A personal coupon is used up by its first booking (stored in the database).
+            await _discounts.ConsumeAsync(request.CouponCode, cancellationToken);
             afterCoupon = ApplyPackage(afterCombo, coupon, applyAmount: true);
             couponCode = coupon.Code ?? string.Empty;
         }
@@ -756,6 +780,7 @@ public class BookingService : IBookingService
             RoomName = roomNames,
             FlightId = booking.FlightId,
             FlightNumber = booking.Flight?.FlightNumber ?? string.Empty,
+            CabinClass = booking.CabinClass,
             TourId = booking.TourId,
             TourName = booking.Tour?.Name ?? (booking.BookingType == "tour" ? booking.ItemName : string.Empty),
             GuestName = booking.GuestName,

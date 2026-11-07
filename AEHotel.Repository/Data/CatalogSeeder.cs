@@ -23,7 +23,10 @@ public static class CatalogSeeder
         
         await SeedHotelsAsync(context);
         await SeedFlightsAsync(context);
+        await SeedAirlinesAsync(context);
         await SeedToursAsync(context);
+        await LinkToursToHotelsAsync(context);
+        await SeedTourCategoriesAsync(context);
         await LocationSeeder.SeedAsync(context);
         await SeedSiteContentAsync(context);
         await SeedDiscountsAsync(context);
@@ -209,6 +212,19 @@ public static class CatalogSeeder
         await context.SaveChangesAsync();
     }
 
+    // Every airline used by a flight is also a row an admin can pick and edit.
+    private static async Task SeedAirlinesAsync(AppDbContext context)
+    {
+        var known = await context.Airlines.Select(item => item.Name).ToListAsync();
+        var used = await context.Flights.Select(flight => flight.Airline).Distinct().ToListAsync();
+        foreach (var name in used.Where(name => !string.IsNullOrWhiteSpace(name) && !known.Contains(name)))
+        {
+            context.Airlines.Add(new Airline { Name = name });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
     private static async Task SeedFlightsAsync(AppDbContext context)
     {
         // Check if we already have flights - prevent duplicates
@@ -255,6 +271,35 @@ public static class CatalogSeeder
             {
                 context.Flights.Add(Flight(item.Airline, item.Number, item.FromCode, item.FromCity, item.FromCountry, item.ToCode, item.ToCity, item.ToCountry, day, item.DepHour, item.DepMinute, item.ArrHour, item.ArrMinute, item.Duration, item.Stops, item.Price, item.Cabin, item.Seats, item.Refundable));
             }
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    // Every category used by a tour is also a row an admin can pick and edit.
+    private static async Task SeedTourCategoriesAsync(AppDbContext context)
+    {
+        var known = await context.TourCategories.Select(item => item.Name).ToListAsync();
+        var used = await context.Tours.Select(tour => tour.Category).Distinct().ToListAsync();
+        foreach (var name in used.Where(name => !string.IsNullOrWhiteSpace(name) && !known.Contains(name)))
+        {
+            context.TourCategories.Add(new TourCategory { Name = name });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    // Tours without a hotel are attached to the first hotel of the city they run in.
+    private static async Task LinkToursToHotelsAsync(AppDbContext context)
+    {
+        var tours = await context.Tours.Where(tour => tour.HotelId == null).ToListAsync();
+        if (tours.Count == 0) return;
+        var hotels = await context.Hotels.Where(hotel => !hotel.IsDeleted).OrderBy(hotel => hotel.Id).ToListAsync();
+        foreach (var tour in tours)
+        {
+            var hotel = hotels.FirstOrDefault(item => item.City.Length > 0 &&
+                (tour.Destination.StartsWith(item.City, StringComparison.OrdinalIgnoreCase) || tour.Name.StartsWith(item.City, StringComparison.OrdinalIgnoreCase)));
+            if (hotel != null) tour.HotelId = hotel.Id;
         }
 
         await context.SaveChangesAsync();
@@ -566,8 +611,23 @@ public static class CatalogSeeder
             Price = price,
             CabinClass = cabin,
             SeatsAvailable = seats,
-            Refundable = refundable
+            Refundable = refundable,
+            Cabins = DemoCabins(cabin, price, seats)
         };
+    }
+
+    // Demo fares: the seeded class keeps its price, the other classes are priced relative to it.
+    private static List<FlightCabin> DemoCabins(string cabin, decimal price, int seats)
+    {
+        var factors = new Dictionary<string, decimal> { ["economy"] = 1m, ["business"] = 2.2m, ["first"] = 3.5m };
+        var key = factors.ContainsKey(cabin) ? cabin : "economy";
+        var economyPrice = price / factors[key];
+        return
+        [
+            new FlightCabin { CabinClass = "economy", Price = Math.Round(economyPrice), SeatsAvailable = key == "economy" ? seats : Math.Max(10, seats) },
+            new FlightCabin { CabinClass = "business", Price = Math.Round(economyPrice * factors["business"]), SeatsAvailable = key == "business" ? seats : Math.Max(4, seats / 3) },
+            new FlightCabin { CabinClass = "first", Price = Math.Round(economyPrice * factors["first"]), SeatsAvailable = key == "first" ? seats : Math.Max(2, seats / 6) },
+        ];
     }
 
     private static Tour Tour(string name, string destination, decimal rating, int reviews, string duration, decimal price, string image, string description, string category, string difficulty, int minGuests, int maxGuests, string[] highlights, string[] included, string[] excluded, (string Title, string[] Activities)[] days, string[] dates)

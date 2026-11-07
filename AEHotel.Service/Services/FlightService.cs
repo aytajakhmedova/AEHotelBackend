@@ -3,6 +3,7 @@ using AEHotel.Service.DTOs.Flights;
 using AEHotel.Domain.Entities;
 using AEHotel.Repository.Repositories.Interfaces;
 using AEHotel.Service.Exceptions;
+using AEHotel.Service.Helpers;
 
 namespace AEHotel.Service.Services;
 
@@ -11,9 +12,11 @@ public class FlightService : IFlightService
     private readonly IFlightRepository _flights;
     private readonly IBookingRepository _bookings;
     private readonly ISiteContentService _site;
+    private readonly IAirlineService _airlines;
 
-    public FlightService(IFlightRepository flights, IBookingRepository bookings, ISiteContentService site)
+    public FlightService(IFlightRepository flights, IBookingRepository bookings, ISiteContentService site, IAirlineService airlines)
     {
+        _airlines = airlines;
         _flights = flights;
         _bookings = bookings;
         _site = site;
@@ -24,7 +27,7 @@ public class FlightService : IFlightService
         var flights = await _flights.GetAllAsync(cancellationToken);
         var matches = flights
             .Where(flight => Matches(flight, origin, destination, date, passengers, cabin))
-            .Select(Map);
+            .Select(flight => FlightCabins.Map(flight, cabin));
 
         return Sort(matches, sort).ToList();
     }
@@ -39,6 +42,27 @@ public class FlightService : IFlightService
             .GroupBy(airport => airport.Code, StringComparer.OrdinalIgnoreCase)
             .Select(group => new AirportResponse { Code = group.Key.ToUpperInvariant(), Name = group.First().Name, Count = group.Count() })
             .OrderByDescending(airport => airport.Count).ThenBy(airport => airport.Code)
+            .ToList();
+    }
+
+    // Destinations with the most upcoming flights, with the cheapest fare and the next departure.
+    public async Task<IReadOnlyList<PopularDestinationResponse>> GetPopularDestinationsAsync(int limit, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.Now;
+        var upcoming = (await _flights.GetAllAsync(cancellationToken)).Where(flight => flight.DepartureAt >= now);
+        return upcoming
+            .GroupBy(flight => flight.DestinationCity, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new PopularDestinationResponse
+            {
+                City = group.Key,
+                Country = group.First().DestinationCountry,
+                Code = group.First().DestinationCode,
+                FlightCount = group.Count(),
+                MinPrice = group.Min(flight => FlightCabins.MinPrice(flight)),
+                NextDeparture = group.Min(flight => flight.DepartureAt)
+            })
+            .OrderByDescending(item => item.FlightCount).ThenBy(item => item.MinPrice)
+            .Take(Math.Clamp(limit, 1, 20))
             .ToList();
     }
 
@@ -65,11 +89,20 @@ public class FlightService : IFlightService
         var flight = await _flights.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Flight with id {id} was not found.");
         
-        // Check if admin is reducing seat count below booked seats
-        var bookedSeats = await _bookings.CountFlightSeatsAsync(id, cancellationToken);
-        if (request.SeatsAvailable < bookedSeats)
+        // A class that already has bookings cannot be removed, nor can its seats drop below what is booked.
+        foreach (var existing in flight.Cabins)
         {
-            throw new ValidationException($"Cannot reduce available seats to {request.SeatsAvailable}. This flight already has {bookedSeats} confirmed bookings.");
+            var booked = await _bookings.CountFlightSeatsAsync(id, existing.CabinClass, cancellationToken);
+            var requested = request.Cabins.FirstOrDefault(item => item.CabinClass == existing.CabinClass);
+            if (requested == null && booked > 0)
+            {
+                throw new ValidationException($"The {existing.CabinClass} class cannot be removed: it already has {booked} booked seats.");
+            }
+
+            if (requested != null && requested.SeatsAvailable < booked)
+            {
+                throw new ValidationException($"Cannot reduce {existing.CabinClass} seats to {requested.SeatsAvailable}. This class already has {booked} confirmed bookings.");
+            }
         }
         
         Apply(flight, request);
@@ -108,13 +141,14 @@ public class FlightService : IFlightService
             return false;
         }
 
-        if (passengers.HasValue && flight.SeatsAvailable < passengers.Value)
+        // Room for the party in the class searched for (or in any class).
+        if (passengers.HasValue && !FlightCabins.HasSeats(flight, passengers.Value, cabin))
         {
             return false;
         }
 
         if (!string.IsNullOrWhiteSpace(cabin) &&
-            !string.Equals(flight.CabinClass, cabin.Trim(), StringComparison.OrdinalIgnoreCase))
+            !flight.Cabins.Any(item => string.Equals(item.CabinClass, cabin.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
             return false;
         }
@@ -180,9 +214,24 @@ public class FlightService : IFlightService
             throw new ValidationException("Arrival must be after departure.");
         }
 
-        if (request.Price < 0 || request.SeatsAvailable < 0)
+        if (request.Cabins == null || request.Cabins.Count == 0)
         {
-            throw new ValidationException("Price and seats cannot be negative.");
+            throw new ValidationException("At least one travel class (economy, business or first) is required.");
+        }
+
+        foreach (var cabin in request.Cabins)
+        {
+            cabin.CabinClass = FlightCabins.Normalize(cabin.CabinClass)
+                ?? throw new ValidationException("Travel class must be economy, business or first.");
+            if (cabin.Price < 0 || cabin.SeatsAvailable < 0)
+            {
+                throw new ValidationException("Price and seats cannot be negative.");
+            }
+        }
+
+        if (request.Cabins.Select(cabin => cabin.CabinClass).Distinct().Count() != request.Cabins.Count)
+        {
+            throw new ValidationException("Each travel class can be added only once.");
         }
     }
 
@@ -190,6 +239,10 @@ public class FlightService : IFlightService
     {
         // Basic validation
         Validate(request);
+
+        // The airline has to be one created by an admin; its stored spelling is used.
+        request.Airline = await _airlines.FindNameAsync(request.Airline, cancellationToken)
+            ?? throw new ValidationException($"Airline '{request.Airline}' does not exist. Please select it from the airline list.");
 
         // Validate countries exist
         var countries = await _site.GetCountriesAsync(cancellationToken);
@@ -248,33 +301,33 @@ public class FlightService : IFlightService
         flight.ArrivalAt = request.ArrivalAt;
         flight.Duration = request.Duration.Trim();
         flight.Stops = request.Stops;
-        flight.Price = request.Price;
-        flight.CabinClass = string.IsNullOrWhiteSpace(request.CabinClass) ? "economy" : request.CabinClass.Trim().ToLowerInvariant();
-        flight.SeatsAvailable = request.SeatsAvailable;
         flight.Refundable = request.Refundable;
+
+        // Sync the classes: update the ones kept, add new ones, drop the ones left out.
+        foreach (var existing in flight.Cabins.Where(item => request.Cabins.All(requested => requested.CabinClass != item.CabinClass)).ToList())
+        {
+            flight.Cabins.Remove(existing);
+        }
+
+        foreach (var requested in request.Cabins)
+        {
+            var cabin = flight.Cabins.FirstOrDefault(item => item.CabinClass == requested.CabinClass);
+            if (cabin == null)
+            {
+                cabin = new FlightCabin { CabinClass = requested.CabinClass };
+                flight.Cabins.Add(cabin);
+            }
+
+            cabin.Price = requested.Price;
+            cabin.SeatsAvailable = requested.SeatsAvailable;
+        }
+
+        // The flight itself only summarises its classes: the cheapest one and the total seats.
+        var cheapest = flight.Cabins.OrderBy(item => item.Price).First();
+        flight.Price = cheapest.Price;
+        flight.CabinClass = cheapest.CabinClass;
+        flight.SeatsAvailable = flight.Cabins.Sum(item => item.SeatsAvailable);
     }
 
-    private static FlightResponse Map(Flight flight)
-    {
-        return new FlightResponse
-        {
-            Id = flight.Id,
-            Airline = flight.Airline,
-            FlightNumber = flight.FlightNumber,
-            OriginCode = flight.OriginCode,
-            OriginCity = flight.OriginCity,
-            OriginCountry = flight.OriginCountry,
-            DestinationCode = flight.DestinationCode,
-            DestinationCity = flight.DestinationCity,
-            DestinationCountry = flight.DestinationCountry,
-            DepartureAt = flight.DepartureAt,
-            ArrivalAt = flight.ArrivalAt,
-            Duration = flight.Duration,
-            Stops = flight.Stops,
-            Price = flight.Price,
-            CabinClass = flight.CabinClass,
-            SeatsAvailable = flight.SeatsAvailable,
-            Refundable = flight.Refundable
-        };
-    }
+    private static FlightResponse Map(Flight flight) => FlightCabins.Map(flight);
 }

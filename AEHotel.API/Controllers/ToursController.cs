@@ -17,6 +17,9 @@ public class ToursController : ControllerBase
         _tourService = tourService;
     }
 
+    // Staff also see tours whose dates have passed, so they can add new dates.
+    private bool IsStaff => User.IsInRole(AppRoles.SuperAdmin) || User.IsInRole(AppRoles.Admin);
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<TourResponse>>> GetAll(
         [FromQuery] string? destination,
@@ -24,9 +27,10 @@ public class ToursController : ControllerBase
         [FromQuery] int? guests,
         [FromQuery] string? category,
         [FromQuery] string? sort,
+        [FromQuery] int? hotelId,
         CancellationToken cancellationToken)
     {
-        return Ok(await _tourService.GetAllAsync(destination, date, guests, cancellationToken, category, sort));
+        return Ok(await _tourService.GetAllAsync(destination, date, guests, cancellationToken, category, sort, hotelId, IsStaff));
     }
 
     [HttpGet("categories")]
@@ -38,7 +42,7 @@ public class ToursController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TourResponse>> GetById(int id, CancellationToken cancellationToken)
     {
-        return Ok(await _tourService.GetByIdAsync(id, cancellationToken));
+        return Ok(await _tourService.GetByIdAsync(id, cancellationToken, IsStaff));
     }
 
     [HttpPost]

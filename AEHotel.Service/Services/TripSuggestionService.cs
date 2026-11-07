@@ -57,7 +57,7 @@ public class TripSuggestionService : ITripSuggestionService
     {
         var passengerCount = guests < 1 ? 1 : guests;
         var flights = await _flights.GetAllAsync(cancellationToken);
-        var tours = await _tours.GetAllAsync(cancellationToken);
+        var tours = (await _tours.GetAllAsync(cancellationToken)).Where(TourDates.HasUpcoming).ToList();
 
         return new TripSuggestionResponse
         {
@@ -75,7 +75,7 @@ public class TripSuggestionService : ITripSuggestionService
     {
         var passengerCount = guests < 1 ? 1 : guests;
         var flights = await _flights.GetAllAsync(cancellationToken);
-        var tours = await _tours.GetAllAsync(cancellationToken);
+        var tours = (await _tours.GetAllAsync(cancellationToken)).Where(TourDates.HasUpcoming).ToList();
 
         return new TripSuggestionResponse
         {
@@ -83,9 +83,9 @@ public class TripSuggestionService : ITripSuggestionService
             Required = false,
             Flights = flights
                 .Where(flight => TravelCountry.Same(TravelCountry.OfFlight(flight), country) &&
-                                 flight.SeatsAvailable >= passengerCount)
+                                 FlightCabins.HasSeats(flight, passengerCount))
                 .OrderBy(flight => flight.DepartureAt)
-                .ThenBy(flight => flight.Price)
+                .ThenBy(flight => FlightCabins.MinPrice(flight))
                 .Select(MapFlight)
                 .ToList(),
             Tours = tours
@@ -100,7 +100,7 @@ public class TripSuggestionService : ITripSuggestionService
     public async Task<IReadOnlyList<TripCountryResponse>> GetCountriesAsync(CancellationToken cancellationToken = default)
     {
         var flights = await _flights.GetAllAsync(cancellationToken);
-        var tours = await _tours.GetAllAsync(cancellationToken);
+        var tours = (await _tours.GetAllAsync(cancellationToken)).Where(TourDates.HasUpcoming).ToList();
         var withOffers = flights.Select(TravelCountry.OfFlight)
             .Concat(tours.Select(TravelCountry.OfTour))
             .Where(value => !string.IsNullOrWhiteSpace(value))
@@ -120,7 +120,7 @@ public class TripSuggestionService : ITripSuggestionService
         DateOnly? checkOut,
         int guests)
     {
-        var open = flights.Where(flight => flight.SeatsAvailable >= guests).ToList();
+        var open = flights.Where(flight => FlightCabins.HasSeats(flight, guests)).ToList();
         var inbound = open
             .Where(flight => (MatchesPlace(city, flight.DestinationCity, flight.DestinationCode) ||
                              MatchesPlace(country, flight.DestinationCountry)) &&
@@ -141,7 +141,7 @@ public class TripSuggestionService : ITripSuggestionService
         return inbound
             .Concat(outbound)
             .Concat(nearby)
-            .Concat(open.OrderBy(flight => flight.Price))
+            .Concat(open.OrderBy(flight => FlightCabins.MinPrice(flight)))
             .DistinctBy(flight => flight.FlightNumber)
             .Take(3)
             .Select(MapFlight)
@@ -202,29 +202,7 @@ public class TripSuggestionService : ITripSuggestionService
              needle.Contains(value, StringComparison.OrdinalIgnoreCase)));
     }
 
-    private static FlightResponse MapFlight(Flight flight)
-    {
-        return new FlightResponse
-        {
-            Id = flight.Id,
-            Airline = flight.Airline,
-            FlightNumber = flight.FlightNumber,
-            OriginCode = flight.OriginCode,
-            OriginCity = flight.OriginCity,
-            OriginCountry = flight.OriginCountry,
-            DestinationCode = flight.DestinationCode,
-            DestinationCity = flight.DestinationCity,
-            DestinationCountry = flight.DestinationCountry,
-            DepartureAt = flight.DepartureAt,
-            ArrivalAt = flight.ArrivalAt,
-            Duration = flight.Duration,
-            Stops = flight.Stops,
-            Price = flight.Price,
-            CabinClass = flight.CabinClass,
-            SeatsAvailable = flight.SeatsAvailable,
-            Refundable = flight.Refundable
-        };
-    }
+    private static FlightResponse MapFlight(Flight flight) => FlightCabins.Map(flight);
 
     private static TourResponse MapTour(Tour tour)
     {
@@ -247,7 +225,7 @@ public class TripSuggestionService : ITripSuggestionService
             Included = JsonLists.ReadStrings(tour.IncludedJson),
             Excluded = JsonLists.ReadStrings(tour.ExcludedJson),
             Itinerary = JsonLists.Read<TourDayResponse>(tour.ItineraryJson),
-            AvailableDates = JsonLists.ReadStrings(tour.AvailableDatesJson)
+            AvailableDates = TourDates.Upcoming(JsonLists.ReadStrings(tour.AvailableDatesJson))
         };
     }
 }

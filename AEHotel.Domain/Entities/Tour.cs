@@ -38,4 +38,9 @@ public class Tour : BaseEntity
     public string ItineraryJson { get; set; } = "[]";
 
     public string AvailableDatesJson { get; set; } = "[]";
+
+    /// <summary>The hotel this tour belongs to; guests booking that hotel can add the tour.</summary>
+    public int? HotelId { get; set; }
+
+    public Hotel? Hotel { get; set; }
 }

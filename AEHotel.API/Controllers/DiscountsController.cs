@@ -25,11 +25,21 @@ public class DiscountsController : ControllerBase
         return Ok(await _discounts.GetActiveAsync(cancellationToken));
     }
 
+    [HttpGet("mine")]
+    [Authorize]
+    public async Task<ActionResult<IReadOnlyList<DiscountPackageResponse>>> GetMine(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedException("Authentication is required.");
+        return Ok(await _discounts.GetMineAsync(userId, cancellationToken));
+    }
+
     [HttpGet("coupon/{code}")]
     [AllowAnonymous]
     public async Task<ActionResult<DiscountPackageResponse>> GetCoupon(string code, CancellationToken cancellationToken)
     {
-        var coupon = await _discounts.GetActiveByCodeAsync(code, cancellationToken)
+        // The signed-in user (if any) is needed for personal coupons such as the welcome coupon.
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var coupon = await _discounts.GetActiveByCodeAsync(code, cancellationToken, userId)
             ?? throw new NotFoundException("Kupon kodu keçərsizdir və ya müddəti bitib.");
         return Ok(coupon);
     }

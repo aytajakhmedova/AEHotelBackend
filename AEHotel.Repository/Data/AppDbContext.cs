@@ -11,6 +11,9 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<Flight> Flights { get; set; }
+    public DbSet<Airline> Airlines { get; set; }
+    public DbSet<FlightCabin> FlightCabins { get; set; }
+    public DbSet<TourCategory> TourCategories { get; set; }
     public DbSet<Tour> Tours { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<Payment> Payments { get; set; }
@@ -49,6 +52,21 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL AND [Code] <> ''");
         
+        builder.Entity<Tour>()
+            .HasOne(tour => tour.Hotel)
+            .WithMany()
+            .HasForeignKey(tour => tour.HotelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var tourCategories = builder.Entity<TourCategory>();
+        tourCategories.Property(item => item.Name).HasMaxLength(100).IsRequired();
+        tourCategories.HasIndex(item => item.Name).IsUnique();
+
+        var airlines = builder.Entity<Airline>();
+        airlines.Property(item => item.Name).HasMaxLength(100).IsRequired();
+        airlines.Property(item => item.Code).HasMaxLength(3);
+        airlines.HasIndex(item => item.Name).IsUnique();
+
         // Concurrency token for Flight to prevent overbooking
         builder.Entity<Flight>()
             .Property(f => f.RowVersion)

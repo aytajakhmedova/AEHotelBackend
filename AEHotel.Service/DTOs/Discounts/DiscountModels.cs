@@ -38,4 +38,7 @@ public class DiscountPackageResponse
     public DateTime? EndsAt { get; set; }
 
     public bool IsActive { get; set; }
+
+    /// <summary>Set once a personal coupon has been used.</summary>
+    public DateTime? UsedAt { get; set; }
 }

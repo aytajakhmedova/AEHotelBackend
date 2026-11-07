@@ -27,7 +27,7 @@ public interface IBookingRepository
 
     Task<int> CountTourGuestsAsync(int tourId, DateOnly travelDate, int? excludeBookingId, CancellationToken cancellationToken = default);
 
-    Task<int> CountFlightSeatsAsync(int flightId, CancellationToken cancellationToken = default);
+    Task<int> CountFlightSeatsAsync(int flightId, string cabinClass, CancellationToken cancellationToken = default);
 
     Task AddAsync(Booking booking, CancellationToken cancellationToken = default);
 

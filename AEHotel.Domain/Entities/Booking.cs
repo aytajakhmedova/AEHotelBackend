@@ -23,6 +23,9 @@ public class Booking : BaseEntity
 
     public int? FlightId { get; set; }
 
+    /// <summary>Travel class chosen for a flight booking (economy, business or first).</summary>
+    public string CabinClass { get; set; } = string.Empty;
+
     public Flight? Flight { get; set; }
 
     public int? TourId { get; set; }

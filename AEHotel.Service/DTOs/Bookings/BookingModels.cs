@@ -27,6 +27,9 @@ public class BookingRequest : HotelStayRequest
 
     public int? FlightId { get; set; }
 
+    /// <summary>Travel class for a flight: economy, business or first.</summary>
+    public string? CabinClass { get; set; }
+
     public int? TourId { get; set; }
 
     public string GuestName { get; set; } = string.Empty;
@@ -96,6 +99,8 @@ public class BookingResponse
     public int? FlightId { get; set; }
 
     public string FlightNumber { get; set; } = string.Empty;
+
+    public string CabinClass { get; set; } = string.Empty;
 
     public int? TourId { get; set; }
 

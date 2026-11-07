@@ -11,26 +11,41 @@ public class TourService : ITourService
 {
     private readonly ITourRepository _tours;
     private readonly IBookingRepository _bookings;
+    private readonly IHotelRepository _hotels;
+    private readonly ITourCategoryService _categories;
 
-    public TourService(ITourRepository tours, IBookingRepository bookings)
+    public TourService(ITourRepository tours, IBookingRepository bookings, IHotelRepository hotels, ITourCategoryService categories)
     {
+        _hotels = hotels;
+        _categories = categories;
         _tours = tours;
         _bookings = bookings;
     }
 
-    public async Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default, string? category = null, string? sort = null)
+    public async Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default, string? category = null, string? sort = null, int? hotelId = null, bool includePast = false)
     {
         var tours = await _tours.GetAllAsync(cancellationToken);
         var results = new List<TourResponse>();
 
         foreach (var tour in tours)
         {
-            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests) || !MatchesCategory(tour, category))
+            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests) || !MatchesCategory(tour, category) || (hotelId.HasValue && tour.HotelId != hotelId.Value))
+            {
+                continue;
+            }
+
+            // Guests do not see a tour whose dates have all passed, nor its past dates; staff see everything.
+            if (!includePast && !TourDates.HasUpcoming(tour))
             {
                 continue;
             }
 
             var mapped = Map(tour);
+            if (!includePast)
+            {
+                mapped.AvailableDates = TourDates.Upcoming(mapped.AvailableDates);
+            }
+
             // A tour only runs on fixed dates, so a date that is not one of them must not hide the
             // tour from the search; only a date the tour actually runs on can leave it without places.
             if (date.HasValue && MatchesDate(tour, date))
@@ -68,18 +83,41 @@ public class TourService : ITourService
         _ => tours.OrderByDescending(t => t.ReviewCount).ThenBy(t => t.Id).ToList(),
     };
 
-    public async Task<TourResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<TourResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default, bool includePast = false)
     {
         var tour = await _tours.GetByIdAsync(id, tracking: false, cancellationToken)
             ?? throw new NotFoundException($"Tour with id {id} was not found.");
-        return Map(tour);
+        if (!includePast && !TourDates.HasUpcoming(tour))
+        {
+            throw new NotFoundException($"Tour with id {id} was not found.");
+        }
+
+        var response = Map(tour);
+        if (!includePast)
+        {
+            response.AvailableDates = TourDates.Upcoming(response.AvailableDates);
+        }
+
+        foreach (var date in response.AvailableDates)
+        {
+            if (!DateOnly.TryParse(date, out var day)) continue;
+            var reserved = await _bookings.CountTourGuestsAsync(tour.Id, day, excludeBookingId: null, cancellationToken);
+            response.Availability.Add(new TourDateAvailability { Date = date, RemainingPlaces = Math.Max(0, tour.MaxGuests - reserved) });
+        }
+
+        return response;
     }
 
     public async Task<TourResponse> CreateAsync(TourRequest request, CancellationToken cancellationToken = default)
     {
         Validate(request);
+        var hotel = await RequireHotelAsync(request, cancellationToken);
+        await RequireCategoryAsync(request, cancellationToken);
         var tour = new Tour();
         Apply(tour, request);
+        tour.Hotel = hotel;
+        // The destination is always the hotel's city and country, so the country is read correctly everywhere.
+        tour.Destination = string.Join(", ", new[] { hotel.City, hotel.Country }.Where(part => !string.IsNullOrWhiteSpace(part)));
         await _tours.AddAsync(tour, cancellationToken);
         await _tours.SaveChangesAsync(cancellationToken);
         return Map(tour);
@@ -88,9 +126,14 @@ public class TourService : ITourService
     public async Task<TourResponse> UpdateAsync(int id, TourRequest request, CancellationToken cancellationToken = default)
     {
         Validate(request);
+        var hotel = await RequireHotelAsync(request, cancellationToken);
+        await RequireCategoryAsync(request, cancellationToken);
         var tour = await _tours.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Tour with id {id} was not found.");
         Apply(tour, request);
+        tour.Hotel = hotel;
+        // The destination is always the hotel's city and country, so the country is read correctly everywhere.
+        tour.Destination = string.Join(", ", new[] { hotel.City, hotel.Country }.Where(part => !string.IsNullOrWhiteSpace(part)));
         await _tours.SaveChangesAsync(cancellationToken);
         return Map(tour);
     }
@@ -137,8 +180,42 @@ public class TourService : ITourService
         return dates.Count == 0 || dates.Contains(date.Value.ToString("yyyy-MM-dd"));
     }
 
+    // The category has to be one created by an admin; its stored spelling is used.
+    private async Task RequireCategoryAsync(TourRequest request, CancellationToken cancellationToken)
+    {
+        request.Category = await _categories.FindNameAsync(request.Category, cancellationToken)
+            ?? throw new ValidationException("Please select a tour category from the list.");
+    }
+
+    // A tour always belongs to an existing hotel; guests booking that hotel are offered the tour.
+    private async Task<Hotel> RequireHotelAsync(TourRequest request, CancellationToken cancellationToken)
+    {
+        if (!request.HotelId.HasValue)
+        {
+            throw new ValidationException("Please select the hotel this tour belongs to.");
+        }
+
+        var hotel = await _hotels.GetByIdAsync(request.HotelId.Value, includeRooms: false, tracking: false, cancellationToken);
+        if (hotel == null || hotel.IsDeleted)
+        {
+            throw new ValidationException("The selected hotel does not exist.");
+        }
+
+        return hotel;
+    }
+
+    private static readonly string[] Difficulties = ["Asan", "Orta", "Çətin"];
+
     private static void Validate(TourRequest request)
     {
+        var difficulty = Difficulties.FirstOrDefault(item => string.Equals(item, (request.Difficulty ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase));
+        if (difficulty == null)
+        {
+            throw new ValidationException("Difficulty must be Asan, Orta or Çətin.");
+        }
+
+        request.Difficulty = difficulty;
+
         if (string.IsNullOrWhiteSpace(request.Name))
         {
             throw new ValidationException("Tour name is required.");
@@ -174,6 +251,7 @@ public class TourService : ITourService
         tour.ExcludedJson = JsonLists.WriteStrings(request.Excluded);
         tour.ItineraryJson = JsonLists.Write(request.Itinerary);
         tour.AvailableDatesJson = JsonLists.WriteStrings(request.AvailableDates);
+        tour.HotelId = request.HotelId;
     }
 
     private static TourResponse Map(Tour tour)
@@ -197,7 +275,9 @@ public class TourService : ITourService
             Included = JsonLists.ReadStrings(tour.IncludedJson),
             Excluded = JsonLists.ReadStrings(tour.ExcludedJson),
             Itinerary = JsonLists.Read<TourDayResponse>(tour.ItineraryJson),
-            AvailableDates = JsonLists.ReadStrings(tour.AvailableDatesJson)
+            AvailableDates = JsonLists.ReadStrings(tour.AvailableDatesJson),
+            HotelId = tour.HotelId,
+            HotelName = tour.Hotel?.Title ?? string.Empty
         };
     }
 }

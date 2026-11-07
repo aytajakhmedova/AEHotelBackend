@@ -46,11 +46,27 @@ public class TourRequest
     public List<TourDayResponse> Itinerary { get; set; } = [];
 
     public List<string> AvailableDates { get; set; } = [];
+
+    public int? HotelId { get; set; }
+}
+
+public class TourDateAvailability
+{
+    /// <summary>yyyy-MM-dd</summary>
+    public string Date { get; set; } = string.Empty;
+
+    /// <summary>Places still free on this date, after all bookings of all guests.</summary>
+    public int RemainingPlaces { get; set; }
 }
 
 public class TourResponse : TourRequest
 {
     public int Id { get; set; }
+
+    public string HotelName { get; set; } = string.Empty;
+
+    /// <summary>Free places for every date the tour runs on (filled on the tour detail).</summary>
+    public List<TourDateAvailability> Availability { get; set; } = [];
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? RemainingPlaces { get; set; }

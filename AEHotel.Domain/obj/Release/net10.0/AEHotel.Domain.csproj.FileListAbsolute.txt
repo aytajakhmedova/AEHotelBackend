@@ -11,3 +11,16 @@ C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Release\net1
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\refint\AEHotel.Domain.dll
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.pdb
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\ref\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\bin\Release\net10.0\AEHotel.Domain.deps.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\bin\Release\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\bin\Release\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.csproj.AssemblyReference.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.AssemblyInfoInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.AssemblyInfo.cs
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.sourcelink.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\refint\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Release\net10.0\ref\AEHotel.Domain.dll

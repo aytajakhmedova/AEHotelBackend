@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AEHotel.SecurityTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f4d624fea29c52125534f001c8658467e164319b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+840915e712a7033e17151edde7b8adbf4f24b895")]
 [assembly: System.Reflection.AssemblyProductAttribute("AEHotel.SecurityTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AEHotel.SecurityTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

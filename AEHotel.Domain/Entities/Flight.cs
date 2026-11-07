@@ -38,4 +38,7 @@ public class Flight : BaseEntity
     public bool Refundable { get; set; }
 
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+    /// <summary>The classes this flight sells; each has its own price and seats. Price, CabinClass and SeatsAvailable above only summarise them.</summary>
+    public List<FlightCabin> Cabins { get; set; } = [];
 }

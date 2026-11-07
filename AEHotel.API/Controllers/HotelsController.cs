@@ -29,9 +29,10 @@ public class HotelsController : ControllerBase
         [FromQuery] DateOnly? checkOut,
         [FromQuery] int? guests,
         [FromQuery] int? adults, [FromQuery] int? children, [FromQuery] int? rooms, [FromQuery] string? country,
+        [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice, [FromQuery] string? currency,
         CancellationToken cancellationToken)
     {
-        var hotels = await _hotelService.GetAllAsync(city, checkIn, checkOut, guests, cancellationToken, adults, children, rooms, country);
+        var hotels = await _hotelService.GetAllAsync(city, checkIn, checkOut, guests, cancellationToken, adults, children, rooms, country, minPrice, maxPrice, currency);
         if (User.Identity?.IsAuthenticated == true && User.TryGetHotelScope(out var scopedHotelId))
         {
             hotels = scopedHotelId == 0

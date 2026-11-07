@@ -752,6 +752,43 @@ namespace AEHotel.Repository.Migrations
                     b.ToTable("Rooms");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.SeasonalPrice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<decimal>("MaxPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MinPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Country", "Month")
+                        .IsUnique();
+
+                    b.ToTable("SeasonalPrices");
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.SiteAdvantage", b =>
                 {
                     b.Property<int>("Id")

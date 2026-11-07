@@ -3,36 +3,7 @@
   "WorkspaceRootPath": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\room.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\room.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\hotel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\hotel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\flight.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\flight.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\booking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\booking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{81E721DE-D40B-4EE8-9550-68D1479E532B}|AEHotel.Repository\\AEHotel.Repository.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.repository\\repositories\\locationrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{81E721DE-D40B-4EE8-9550-68D1479E532B}|AEHotel.Repository\\AEHotel.Repository.csproj|solutionrelative:aehotel.repository\\repositories\\locationrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\country.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\country.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\aehotelbackend\\aehotel.domain\\entities\\city.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A154189C-6502-4A62-A62B-A001573A3047}|AEHotel.Domain\\AEHotel.Domain.csproj|solutionrelative:aehotel.domain\\entities\\city.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Tours.sql||{0058A1F7-65F3-4DB9-B3D0-CA7E64DD73CD}"
     }
   ],
   "DocumentGroupContainers": [
@@ -42,86 +13,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 4,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "Country.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Country.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\Country.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Country.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\Country.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T17:55:16.866Z",
-              "IsPinned": true
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Room.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Room.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\Room.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Room.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\Room.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T20:14:52.854Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Payment.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Payment.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\Payment.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Payment.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\Payment.cs",
-              "ViewState": "AgIAABgAAAAAAAAAAAAqwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T20:14:47.301Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Hotel.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Hotel.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\Hotel.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Hotel.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\Hotel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T20:14:45.849Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Flight.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Flight.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\Flight.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Flight.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\Flight.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T20:14:33.539Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Booking.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Booking.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\Booking.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\Booking.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\Booking.cs",
-              "ViewState": "AgIAACMAAAAAAAAAAAAmwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T20:14:26.783Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
@@ -140,28 +33,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "LocationRepository.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\Repositories\\LocationRepository.cs",
-              "RelativeDocumentMoniker": "AEHotel.Repository\\Repositories\\LocationRepository.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\Repositories\\LocationRepository.cs",
-              "RelativeToolTip": "AEHotel.Repository\\Repositories\\LocationRepository.cs",
-              "ViewState": "AgIAAGQAAAAAAAAAAAAxwHAAAAAoAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T19:43:26.489Z",
+              "DocumentIndex": 0,
+              "Title": "dbo.Tours [Data]",
+              "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Tours.sql",
+              "ToolTip": "dbo.Tours [Data]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2026-11-07T07:36:04.026Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "City.cs",
-              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\City.cs",
-              "RelativeDocumentMoniker": "AEHotel.Domain\\Entities\\City.cs",
-              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\Entities\\City.cs",
-              "RelativeToolTip": "AEHotel.Domain\\Entities\\City.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-06T17:55:25.334Z"
             }
           ]
         },

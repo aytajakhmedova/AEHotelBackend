@@ -18,6 +18,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<SiteMenuItem> SiteMenuItems { get; set; }
     public DbSet<SiteSlide> SiteSlides { get; set; }
     public DbSet<SiteAdvantage> SiteAdvantages { get; set; }
+    public DbSet<SeasonalPrice> SeasonalPrices { get; set; }
     public DbSet<DiscountPackage> DiscountPackages { get; set; }
     public DbSet<StayReview> StayReviews { get; set; }
     public DbSet<Country> Countries { get; set; }

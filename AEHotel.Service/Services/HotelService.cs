@@ -22,15 +22,21 @@ public class HotelService : IHotelService
         _locations = locations;
     }
 
-    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null)
+    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null, decimal? minPrice = null, decimal? maxPrice = null, string? currency = null)
     {
         var hotels = await _hotels.GetAllAsync(cancellationToken);
+        // Hotels are priced in AZN, so a range given in another currency is converted first.
+        var toAzn = ToAznRate(currency);
+        var minAzn = minPrice * toAzn;
+        var maxAzn = maxPrice * toAzn;
         var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
-        var party = StayParty.From(adults, children, rooms, guests);
+        var party = SearchParty(adults, children, rooms, guests);
         var searching = checkIn.HasValue || rooms.HasValue || adults.HasValue || guests.HasValue;
         var results = hotels
             .Where(hotel => MatchesCity(hotel, city))
             .Where(hotel => string.IsNullOrWhiteSpace(country) || string.Equals(hotel.Country, country.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Where(hotel => (!minAzn.HasValue || hotel.PricePerNight >= minAzn.Value)
+                         && (!maxAzn.HasValue || hotel.PricePerNight <= maxAzn.Value))
             .Select(hotel => MapStay(hotel, busyRooms, party, searching))
             .Where(hotel => !searching || hotel.Rooms.Count > 0)
             .ToList();
@@ -45,7 +51,7 @@ public class HotelService : IHotelService
 
         var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
         if (hotel.IsDeleted) throw new NotFoundException("Hotel was not found.");
-        return MapStay(hotel, busyRooms, StayParty.From(adults, children, rooms, guests),
+        return MapStay(hotel, busyRooms, SearchParty(adults, children, rooms, guests),
             checkIn.HasValue || rooms.HasValue || adults.HasValue || guests.HasValue);
     }
 
@@ -96,6 +102,13 @@ public class HotelService : IHotelService
         await _hotels.SaveChangesAsync(cancellationToken);
     }
 
+    // A search never asks for more rooms than there are guests: the extra rooms are simply dropped.
+    private static StayParty SearchParty(int? adults, int? children, int? rooms, int? guests)
+    {
+        var party = StayParty.From(adults, children, null, guests);
+        return rooms.HasValue ? party with { Rooms = Math.Clamp(rooms.Value, 1, Math.Max(1, party.Guests)) } : party;
+    }
+
     private static HotelResponse MapStay(Hotel hotel, IReadOnlySet<int>? busy, StayParty party, bool searching)
     {
         var result = EntityMapper.MapHotel(hotel, busy);
@@ -107,9 +120,22 @@ public class HotelService : IHotelService
         if (largest.Count < party.Rooms || capacity < party.Guests)
             result.Rooms = [];
         else
-            result.Rooms = open.Where(r => capacity - largest[^1].Capacity + r.Capacity >= party.Guests).ToList();
+            // Rooms that can be part of a fitting set, the snuggest fit first (a 1-guest search lists
+            // single rooms before the big family ones), cheapest first among equals.
+            result.Rooms = open.Where(r => capacity - largest[^1].Capacity + r.Capacity >= party.Guests)
+                .OrderBy(r => r.Capacity).ThenBy(r => r.PricePerNight).ThenBy(r => r.Id).ToList();
         return result;
     }
+
+    // Approximate fixed rates, the same ones the site uses to display prices (1 USD = 1.7 AZN, 1 EUR = 1.85 AZN).
+    // TRY is derived from the AZN and TRY seasonal price tables shown on the home page.
+    private static decimal ToAznRate(string? currency) => currency?.Trim().ToUpperInvariant() switch
+    {
+        "EUR" => 1.85m,
+        "USD" => 1.7m,
+        "TRY" => 0.065m,
+        _ => 1m,
+    };
 
     private static bool MatchesCity(Hotel hotel, string? city)
     {
@@ -216,12 +242,19 @@ public class HotelService : IHotelService
 
     private async Task<IReadOnlySet<int>?> GetBusyRoomsAsync(DateOnly? checkIn, DateOnly? checkOut, CancellationToken cancellationToken)
     {
-        if (checkIn.HasValue != checkOut.HasValue || checkOut <= checkIn)
-            throw new ValidationException("Supply both stay dates, with check-out after check-in.");
+        // Only a check-in date means a one-night stay; a lone check-out date says nothing about availability.
+        if (checkIn.HasValue && !checkOut.HasValue)
+        {
+            checkOut = checkIn.Value.AddDays(1);
+        }
+
         if (!checkIn.HasValue || !checkOut.HasValue)
         {
             return null;
         }
+
+        if (checkOut <= checkIn)
+            throw new ValidationException("Check-out must be after check-in.");
 
         var busyBookings = await _bookings.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);
         var busyReservations = await _reservations.GetBusyRoomIdsAsync(checkIn.Value, checkOut.Value, cancellationToken);

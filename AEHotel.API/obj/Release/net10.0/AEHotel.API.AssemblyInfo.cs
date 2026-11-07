@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AEHotel.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2f1287147a61057856d9006c7f3d8cbed4136873")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c959d2e9975f523b198019bc253c02762c872ea4")]
 [assembly: System.Reflection.AssemblyProductAttribute("AEHotel.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AEHotel.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

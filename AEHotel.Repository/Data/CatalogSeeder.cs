@@ -28,6 +28,44 @@ public static class CatalogSeeder
         await SeedSiteContentAsync(context);
         await SeedDiscountsAsync(context);
         await SeedCouponAsync(context);
+        await SeedSeasonalPricesAsync(context);
+        await MediaDefaults.EnsureAsync(context);
+    }
+
+    // Initial values of the home page "seasonal prices" table; admins edit them afterwards.
+    private static async Task SeedSeasonalPricesAsync(AppDbContext context)
+    {
+        if (await context.SeasonalPrices.AnyAsync())
+        {
+            return;
+        }
+
+        // Months February to July, each as (min, max) in the country's currency.
+        var table = new (string Country, string Currency, (int Min, int Max)[] Months)[]
+        {
+            ("Azərbaycan", "AZN", [(150, 750), (165, 820), (180, 890), (200, 960), (220, 1050), (240, 1120)]),
+            ("Türkiyə", "TRY", [(2380, 11300), (2395, 11610), (2750, 13275), (2945, 14100), (3235, 15900), (3160, 15750)]),
+            ("İtaliya", "EUR", [(180, 850), (195, 920), (220, 1050), (250, 1180), (280, 1320), (310, 1450)]),
+            ("Fransa", "EUR", [(170, 820), (185, 890), (210, 980), (240, 1120), (270, 1260), (300, 1400)]),
+            ("Maldiv adaları", "AZN", [(380, 900), (400, 950), (420, 1000), (450, 1050), (480, 1100), (500, 1150)]),
+        };
+
+        foreach (var (country, currency, months) in table)
+        {
+            for (var i = 0; i < months.Length; i++)
+            {
+                context.SeasonalPrices.Add(new SeasonalPrice
+                {
+                    Country = country,
+                    Month = i + 2,
+                    MinPrice = months[i].Min,
+                    MaxPrice = months[i].Max,
+                    Currency = currency,
+                });
+            }
+        }
+
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedDiscountsAsync(AppDbContext context)

@@ -25,13 +25,15 @@ public class TourService : ITourService
 
         foreach (var tour in tours)
         {
-            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests) || !MatchesDate(tour, date))
+            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests))
             {
                 continue;
             }
 
             var mapped = Map(tour);
-            if (date.HasValue)
+            // A tour only runs on fixed dates, so a date that is not one of them must not hide the
+            // tour from the search; only a date the tour actually runs on can leave it without places.
+            if (date.HasValue && MatchesDate(tour, date))
             {
                 var reserved = await _bookings.CountTourGuestsAsync(tour.Id, date.Value, excludeBookingId: null, cancellationToken);
                 mapped.RemainingPlaces = Math.Max(0, tour.MaxGuests - reserved);

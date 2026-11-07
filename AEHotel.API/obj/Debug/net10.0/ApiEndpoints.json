@@ -657,6 +657,52 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "AEHotel.API.Controllers.FlightsController",
+    "Method": "GetAirports",
+    "RelativePath": "api/flights/airports",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "origin",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "destination",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "date",
+        "Type": "System.Nullable\u00601[[System.DateOnly, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "passengers",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "cabin",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IReadOnlyList\u00601[[AEHotel.Service.DTOs.Flights.AirportResponse, AEHotel.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "AEHotel.API.Controllers.HealthController",
     "Method": "Get",
     "RelativePath": "api/health",
@@ -726,6 +772,21 @@
       },
       {
         "Name": "currency",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "stars",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "hotelTypes",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "amenities",
         "Type": "System.String",
         "IsRequired": false
       }
@@ -1415,6 +1476,32 @@
   },
   {
     "ContainingType": "AEHotel.API.Controllers.ReviewsController",
+    "Method": "GetFeatured",
+    "RelativePath": "api/reviews/featured",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "limit",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IReadOnlyList\u00601[[AEHotel.Service.DTOs.Reviews.ReviewResponse, AEHotel.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "AEHotel.API.Controllers.ReviewsController",
     "Method": "GetMine",
     "RelativePath": "api/reviews/mine",
     "HttpMethod": "GET",
@@ -1424,6 +1511,26 @@
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.IReadOnlyList\u00601[[AEHotel.Service.DTOs.Reviews.ReviewResponse, AEHotel.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "AEHotel.API.Controllers.ReviewsController",
+    "Method": "GetSummary",
+    "RelativePath": "api/reviews/summary",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "AEHotel.Service.DTOs.Reviews.ReviewSummaryResponse",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -2243,6 +2350,16 @@
         "Name": "guests",
         "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
+      },
+      {
+        "Name": "category",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "sort",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": [
@@ -2355,6 +2472,26 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "AEHotel.API.Controllers.ToursController",
+    "Method": "GetCategories",
+    "RelativePath": "api/tours/categories",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IReadOnlyList\u00601[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "AEHotel.API.Controllers.TripSuggestionsController",

@@ -22,7 +22,7 @@ public class HotelService : IHotelService
         _locations = locations;
     }
 
-    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null, decimal? minPrice = null, decimal? maxPrice = null, string? currency = null)
+    public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null, decimal? minPrice = null, decimal? maxPrice = null, string? currency = null, string? stars = null, string? hotelTypes = null, string? amenities = null)
     {
         var hotels = await _hotels.GetAllAsync(cancellationToken);
         // Hotels are priced in AZN, so a range given in another currency is converted first.
@@ -32,11 +32,17 @@ public class HotelService : IHotelService
         var busyRooms = await GetBusyRoomsAsync(checkIn, checkOut, cancellationToken);
         var party = SearchParty(adults, children, rooms, guests);
         var searching = checkIn.HasValue || rooms.HasValue || adults.HasValue || guests.HasValue;
+        var starSet = SplitList(stars).Select(s => int.TryParse(s, out var n) ? n : -1).ToHashSet();
+        var typeSet = SplitList(hotelTypes).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var amenitySet = SplitList(amenities).ToList();
         var results = hotels
             .Where(hotel => MatchesCity(hotel, city))
             .Where(hotel => string.IsNullOrWhiteSpace(country) || string.Equals(hotel.Country, country.Trim(), StringComparison.OrdinalIgnoreCase))
             .Where(hotel => (!minAzn.HasValue || hotel.PricePerNight >= minAzn.Value)
                          && (!maxAzn.HasValue || hotel.PricePerNight <= maxAzn.Value))
+            .Where(hotel => starSet.Count == 0 || starSet.Contains(hotel.Stars))
+            .Where(hotel => typeSet.Count == 0 || typeSet.Contains(hotel.HotelType ?? string.Empty))
+            .Where(hotel => amenitySet.Count == 0 || amenitySet.All(a => JsonLists.ReadStrings(hotel.AmenitiesJson).Contains(a, StringComparer.OrdinalIgnoreCase)))
             .Select(hotel => MapStay(hotel, busyRooms, party, searching))
             .Where(hotel => !searching || hotel.Rooms.Count > 0)
             .ToList();
@@ -102,6 +108,9 @@ public class HotelService : IHotelService
         await _hotels.SaveChangesAsync(cancellationToken);
     }
 
+    private static IEnumerable<string> SplitList(string? value) =>
+        (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     // A search never asks for more rooms than there are guests: the extra rooms are simply dropped.
     private static StayParty SearchParty(int? adults, int? children, int? rooms, int? guests)
     {
@@ -113,7 +122,8 @@ public class HotelService : IHotelService
     {
         var result = EntityMapper.MapHotel(hotel, busy);
         if (!searching) return result;
-        var open = result.Rooms.Where(r => r.IsAvailable && r.Capacity > 0)
+        // A single-guest search only matches genuine single rooms, not larger rooms that could also fit one person.
+        var open = result.Rooms.Where(r => r.IsAvailable && r.Capacity > 0 && (party.Guests != 1 || r.Capacity == 1))
             .OrderByDescending(r => r.Capacity).ThenBy(r => r.Id).ToList();
         var largest = open.Take(party.Rooms).ToList();
         long capacity = largest.Sum(r => (long)r.Capacity);

@@ -1001,11 +1001,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
+      "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
       "projectName": "AEHotel.Domain",
-      "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
+      "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
       "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\obj\\",
+      "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

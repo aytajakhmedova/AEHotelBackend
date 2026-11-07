@@ -4266,11 +4266,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
+      "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
       "projectName": "AEHotel.SecurityTests",
-      "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
+      "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
       "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\obj\\",
+      "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -4292,8 +4292,8 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj": {
-              "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj"
+            "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj": {
+              "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj"
             }
           }
         }

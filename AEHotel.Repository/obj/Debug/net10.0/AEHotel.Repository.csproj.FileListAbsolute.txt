@@ -54,3 +54,25 @@ C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Repository\obj\Debug\ne
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.pdb
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.genruntimeconfig.cache
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\ref\AEHotel.Repository.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\bin\Debug\net10.0\AEHotel.Repository.deps.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\bin\Debug\net10.0\AEHotel.Repository.runtimeconfig.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\bin\Debug\net10.0\AEHotel.Repository.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\bin\Debug\net10.0\AEHotel.Repository.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\bin\Debug\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\bin\Debug\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.csproj.AssemblyReference.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.AssemblyInfoInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.AssemblyInfo.cs
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.csproj.CoreCompileInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.sourcelink.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel..87E2A83D.Up2Date
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\refint\AEHotel.Repository.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\AEHotel.Repository.genruntimeconfig.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Repository\obj\Debug\net10.0\ref\AEHotel.Repository.dll
+C:\temp_ae_out\AEHotel.Repository.deps.json
+C:\temp_ae_out\AEHotel.Repository.runtimeconfig.json
+C:\temp_ae_out\AEHotel.Repository.dll
+C:\temp_ae_out\AEHotel.Repository.pdb

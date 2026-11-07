@@ -18,14 +18,14 @@ public class TourService : ITourService
         _bookings = bookings;
     }
 
-    public async Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TourResponse>> GetAllAsync(string? destination = null, DateOnly? date = null, int? guests = null, CancellationToken cancellationToken = default, string? category = null, string? sort = null)
     {
         var tours = await _tours.GetAllAsync(cancellationToken);
         var results = new List<TourResponse>();
 
         foreach (var tour in tours)
         {
-            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests))
+            if (!MatchesDestination(tour, destination) || !MatchesGuests(tour, guests) || !MatchesCategory(tour, category))
             {
                 continue;
             }
@@ -46,8 +46,27 @@ public class TourService : ITourService
             results.Add(mapped);
         }
 
-        return results;
+        return Sort(results, sort);
     }
+
+    public async Task<IReadOnlyList<string>> GetCategoriesAsync(CancellationToken cancellationToken = default)
+    {
+        var tours = await _tours.GetAllAsync(cancellationToken);
+        return tours.Select(t => t.Category).Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(c => c, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static bool MatchesCategory(Tour tour, string? category) =>
+        string.IsNullOrWhiteSpace(category) || string.Equals(tour.Category, category.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private static List<TourResponse> Sort(List<TourResponse> tours, string? sort) => sort?.Trim().ToLowerInvariant() switch
+    {
+        "price-low" => tours.OrderBy(t => t.Price).ThenBy(t => t.Id).ToList(),
+        "price-high" => tours.OrderByDescending(t => t.Price).ThenBy(t => t.Id).ToList(),
+        "rating" => tours.OrderByDescending(t => t.Rating).ThenBy(t => t.Id).ToList(),
+        "duration" => tours.OrderBy(t => t.Duration, StringComparer.OrdinalIgnoreCase).ThenBy(t => t.Id).ToList(),
+        _ => tours.OrderByDescending(t => t.ReviewCount).ThenBy(t => t.Id).ToList(),
+    };
 
     public async Task<TourResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {

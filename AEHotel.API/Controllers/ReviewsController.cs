@@ -24,6 +24,20 @@ public class ReviewsController : ControllerBase
         return Ok(await _reviews.GetByHotelAsync(hotelId, cancellationToken));
     }
 
+    [HttpGet("reviews/featured")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IReadOnlyList<ReviewResponse>>> GetFeatured([FromQuery] int limit = 6, CancellationToken cancellationToken = default)
+    {
+        return Ok(await _reviews.GetFeaturedAsync(limit, cancellationToken));
+    }
+
+    [HttpGet("reviews/summary")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ReviewSummaryResponse>> GetSummary(CancellationToken cancellationToken)
+    {
+        return Ok(await _reviews.GetSummaryAsync(cancellationToken));
+    }
+
     [HttpGet("reviews/mine")]
     [Authorize]
     public async Task<ActionResult<IReadOnlyList<ReviewResponse>>> GetMine(CancellationToken cancellationToken)

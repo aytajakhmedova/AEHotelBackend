@@ -8,6 +8,10 @@ public interface IStayReviewService
 
     Task<IReadOnlyList<ReviewResponse>> GetMineAsync(string userId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<ReviewResponse>> GetFeaturedAsync(int limit, CancellationToken cancellationToken = default);
+
+    Task<ReviewSummaryResponse> GetSummaryAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ReviewResponse>> GetAllAsync(int? hotelScopeId, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsForBookingAsync(int bookingId, CancellationToken cancellationToken = default);

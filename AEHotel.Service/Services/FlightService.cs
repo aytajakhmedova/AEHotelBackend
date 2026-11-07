@@ -29,6 +29,19 @@ public class FlightService : IFlightService
         return Sort(matches, sort).ToList();
     }
 
+    public async Task<IReadOnlyList<AirportResponse>> GetAirportsAsync(string? origin, string? destination, DateOnly? date, int? passengers, string? cabin, CancellationToken cancellationToken = default)
+    {
+        var flights = (await _flights.GetAllAsync(cancellationToken))
+            .Where(flight => Matches(flight, origin, destination, date, passengers, cabin))
+            .ToList();
+        return flights
+            .SelectMany(flight => new[] { (Code: flight.OriginCode, Name: flight.OriginCity), (Code: flight.DestinationCode, Name: flight.DestinationCity) })
+            .GroupBy(airport => airport.Code, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new AirportResponse { Code = group.Key.ToUpperInvariant(), Name = group.First().Name, Count = group.Count() })
+            .OrderByDescending(airport => airport.Count).ThenBy(airport => airport.Code)
+            .ToList();
+    }
+
     public async Task<FlightResponse> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var flight = await _flights.GetByIdAsync(id, tracking: false, cancellationToken)

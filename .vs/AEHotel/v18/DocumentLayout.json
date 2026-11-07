@@ -1,7 +1,17 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\AEHotelBackend\\",
+  "WorkspaceRootPath": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\",
   "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}|AEHotel.Service\\AEHotel.Service.csproj|c:\\users\\aytac\u0027s noteboob\\desktop\\finalproject\\aehotelbackend\\aehotel.service\\services\\hotelservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF30C0C3-4BB9-43A0-85AF-2D0002CA0BE3}|AEHotel.Service\\AEHotel.Service.csproj|solutionrelative:aehotel.service\\services\\hotelservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Countries.sql||{0058A1F7-65F3-4DB9-B3D0-CA7E64DD73CD}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Cities.sql||{0058A1F7-65F3-4DB9-B3D0-CA7E64DD73CD}"
+    },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Tours.sql||{0058A1F7-65F3-4DB9-B3D0-CA7E64DD73CD}"
     }
@@ -34,12 +44,42 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "dbo.Tours [Data]",
-              "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Tours.sql",
-              "ToolTip": "dbo.Tours [Data]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2026-11-07T07:36:04.026Z",
+              "Title": "HotelService.cs",
+              "DocumentMoniker": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\Services\\HotelService.cs",
+              "RelativeDocumentMoniker": "AEHotel.Service\\Services\\HotelService.cs",
+              "ToolTip": "C:\\Users\\Aytac\u0027s Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\Services\\HotelService.cs",
+              "RelativeToolTip": "AEHotel.Service\\Services\\HotelService.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAswCQAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-07T14:48:57.812Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "dbo.Countries.sql",
+              "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Countries.sql",
+              "ToolTip": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Countries.sql",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2026-11-07T11:23:14.641Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "dbo.Cities.sql",
+              "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Cities.sql",
+              "ToolTip": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Cities.sql",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2026-11-07T11:23:07.213Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "dbo.Tours.sql",
+              "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Tours.sql",
+              "ToolTip": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Tours.sql",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2026-11-07T07:36:04.026Z"
             }
           ]
         },

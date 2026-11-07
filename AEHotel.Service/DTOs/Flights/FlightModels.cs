@@ -39,3 +39,13 @@ public class FlightResponse : FlightRequest
 {
     public int Id { get; set; }
 }
+
+public class AirportResponse
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    // Number of matching flights that depart from or land at this airport.
+    public int Count { get; set; }
+}

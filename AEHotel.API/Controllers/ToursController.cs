@@ -22,9 +22,17 @@ public class ToursController : ControllerBase
         [FromQuery] string? destination,
         [FromQuery] DateOnly? date,
         [FromQuery] int? guests,
+        [FromQuery] string? category,
+        [FromQuery] string? sort,
         CancellationToken cancellationToken)
     {
-        return Ok(await _tourService.GetAllAsync(destination, date, guests, cancellationToken));
+        return Ok(await _tourService.GetAllAsync(destination, date, guests, cancellationToken, category, sort));
+    }
+
+    [HttpGet("categories")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetCategories(CancellationToken cancellationToken)
+    {
+        return Ok(await _tourService.GetCategoriesAsync(cancellationToken));
     }
 
     [HttpGet("{id:int}")]

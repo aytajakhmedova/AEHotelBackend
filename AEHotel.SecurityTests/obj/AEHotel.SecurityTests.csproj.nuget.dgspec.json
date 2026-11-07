@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj": {}
+    "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj": {
+    "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj",
+        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj",
         "projectName": "AEHotel.API",
-        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj",
+        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj",
         "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\obj\\",
+        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -33,11 +33,11 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj": {
-                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj"
+              "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj": {
+                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj"
               },
-              "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj": {
-                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj"
+              "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj": {
+                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj"
               }
             }
           }
@@ -510,14 +510,14 @@
         }
       }
     },
-    "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj": {
+    "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
         "projectName": "AEHotel.Domain",
-        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
+        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj",
         "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\obj\\",
+        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -860,14 +860,14 @@
         }
       }
     },
-    "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj": {
+    "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj",
+        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj",
         "projectName": "AEHotel.Repository",
-        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj",
+        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj",
         "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\obj\\",
+        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -889,8 +889,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj": {
-                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj"
+              "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj": {
+                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj"
               }
             }
           }
@@ -1220,14 +1220,14 @@
         }
       }
     },
-    "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj": {
+    "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
+        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
         "projectName": "AEHotel.SecurityTests",
-        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
+        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\AEHotel.SecurityTests.csproj",
         "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.SecurityTests\\obj\\",
+        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.SecurityTests\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1249,8 +1249,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj": {
-                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj"
+              "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj": {
+                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.API\\AEHotel.API.csproj"
               }
             }
           }
@@ -1587,14 +1587,14 @@
         }
       }
     },
-    "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj": {
+    "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj",
+        "projectUniqueName": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj",
         "projectName": "AEHotel.Service",
-        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj",
+        "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\AEHotel.Service.csproj",
         "packagesPath": "C:\\Users\\Aytac's Noteboob\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Service\\obj\\",
+        "outputPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Service\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1616,11 +1616,11 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj": {
-                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj"
+              "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj": {
+                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Domain\\AEHotel.Domain.csproj"
               },
-              "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj": {
-                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj"
+              "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj": {
+                "projectPath": "C:\\Users\\Aytac's Noteboob\\Desktop\\FinalProject\\AEHotelBackend\\AEHotel.Repository\\AEHotel.Repository.csproj"
               }
             }
           }

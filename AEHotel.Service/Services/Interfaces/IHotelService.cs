@@ -4,7 +4,7 @@ namespace AEHotel.Service.Services.Interfaces;
 
 public interface IHotelService
 {
-    Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null, decimal? minPrice = null, decimal? maxPrice = null, string? currency = null);
+    Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null, decimal? minPrice = null, decimal? maxPrice = null, string? currency = null, string? stars = null, string? hotelTypes = null, string? amenities = null);
 
     Task<HotelResponse> GetByIdAsync(int id, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null);
 

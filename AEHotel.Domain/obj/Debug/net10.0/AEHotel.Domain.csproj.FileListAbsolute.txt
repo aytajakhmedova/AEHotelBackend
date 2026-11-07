@@ -39,3 +39,21 @@ C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\refint\AEHotel.Domain.dll
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.pdb
 C:\Users\Aytac's Noteboob\Desktop\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\ref\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.deps.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\bin\Debug\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.csproj.AssemblyReference.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.AssemblyInfoInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.AssemblyInfo.cs
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.sourcelink.json
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\refint\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.Domain\obj\Debug\net10.0\ref\AEHotel.Domain.dll
+C:\Users\Aytac's Noteboob\AppData\Local\Temp\claude\aad44e0798595f58\a1c681cd-55b5-4dae-ae56-15a20f98cf1f\scratchpad\out\AEHotel.Domain.deps.json
+C:\Users\Aytac's Noteboob\AppData\Local\Temp\claude\aad44e0798595f58\a1c681cd-55b5-4dae-ae56-15a20f98cf1f\scratchpad\out\AEHotel.Domain.dll
+C:\temp_ae_out\AEHotel.Domain.deps.json
+C:\temp_ae_out\AEHotel.Domain.dll
+C:\temp_ae_out\AEHotel.Domain.pdb

@@ -31,6 +31,18 @@ public class FlightsController : ControllerBase
         return Ok(flights);
     }
 
+    [HttpGet("airports")]
+    public async Task<ActionResult<IReadOnlyList<AirportResponse>>> GetAirports(
+        [FromQuery] string? origin,
+        [FromQuery] string? destination,
+        [FromQuery] DateOnly? date,
+        [FromQuery] int? passengers,
+        [FromQuery] string? cabin,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await _flightService.GetAirportsAsync(origin, destination, date, passengers, cabin, cancellationToken));
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<FlightResponse>> GetById(int id, CancellationToken cancellationToken)
     {

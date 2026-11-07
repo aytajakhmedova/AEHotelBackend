@@ -31,6 +31,33 @@ public class StayReviewService : IStayReviewService
         return items.Select(Map).ToList();
     }
 
+    // The best approved reviews across all hotels, for the home and reviews pages.
+    public async Task<IReadOnlyList<ReviewResponse>> GetFeaturedAsync(int limit, CancellationToken cancellationToken = default)
+    {
+        var items = await _db.StayReviews.AsNoTracking()
+            .Include(item => item.Hotel)
+            .Where(item => item.IsApproved)
+            .OrderByDescending(item => item.Rating).ThenByDescending(item => item.CreatedAt)
+            .Take(Math.Clamp(limit, 1, 50))
+            .ToListAsync(cancellationToken);
+        return items.Select(Map).ToList();
+    }
+
+    public async Task<ReviewSummaryResponse> GetSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var ratings = await _db.StayReviews.AsNoTracking()
+            .Where(item => item.IsApproved)
+            .Select(item => item.Rating)
+            .ToListAsync(cancellationToken);
+        if (ratings.Count == 0) return new ReviewSummaryResponse();
+        return new ReviewSummaryResponse
+        {
+            Count = ratings.Count,
+            AverageRating = Math.Round(ratings.Average(), 1),
+            PositivePercent = (int)Math.Round(100.0 * ratings.Count(r => r >= 4) / ratings.Count)
+        };
+    }
+
     public async Task<IReadOnlyList<ReviewResponse>> GetMineAsync(string userId, CancellationToken cancellationToken = default)
     {
         var items = await _db.StayReviews.AsNoTracking()

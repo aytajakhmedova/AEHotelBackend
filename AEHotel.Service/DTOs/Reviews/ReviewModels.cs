@@ -35,3 +35,13 @@ public class ReviewResponse
 
     public DateTime CreatedAt { get; set; }
 }
+
+public class ReviewSummaryResponse
+{
+    public int Count { get; set; }
+
+    public double AverageRating { get; set; }
+
+    // Share of approved reviews rated 4 or 5, 0-100.
+    public int PositivePercent { get; set; }
+}

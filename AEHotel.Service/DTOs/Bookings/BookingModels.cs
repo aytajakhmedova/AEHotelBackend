@@ -54,6 +54,9 @@ public class BookingRequest : HotelStayRequest
 
     public string? BundleCombo { get; set; }
 
+    /// <summary>The flights and tour added to a hotel booking at checkout. They are created together with it.</summary>
+    public List<BookingRequest>? Extras { get; set; }
+
     public string? CouponCode { get; set; }
 
     /// <summary>Country picked on checkout for add-on flights and tours; the selected item must belong to it.</summary>
@@ -78,6 +81,9 @@ public class BookingStatusRequest
 
 public class BookingResponse
 {
+    /// <summary>The flight and tour bookings created with a hotel booking.</summary>
+    public IReadOnlyList<BookingResponse> Extras { get; set; } = [];
+
     public IReadOnlyList<StayRoom> Rooms { get; set; } = [];
 
     public int Id { get; set; }

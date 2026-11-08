@@ -522,6 +522,16 @@ public static class CatalogSeeder
             );
         }
 
+        // The public offers page sits in the "pages" menu, right after the gallery (added once, also to existing databases)
+        if (!await context.SiteMenuItems.AnyAsync(item => item.Url == "/offers"))
+        {
+            var galleryOrder = await context.SiteMenuItems
+                .Where(item => item.Placement == "pages")
+                .MaxAsync(item => (int?)item.SortOrder) ?? 0;
+            context.SiteMenuItems.Add(new SiteMenuItem { Label = "Təkliflər", Url = "/offers", Placement = "pages", IsRoute = true, SortOrder = galleryOrder + 1, IsActive = true });
+            await context.SaveChangesAsync();
+        }
+
         if (!await context.SiteAdvantages.AnyAsync())
         {
             context.SiteAdvantages.AddRange(

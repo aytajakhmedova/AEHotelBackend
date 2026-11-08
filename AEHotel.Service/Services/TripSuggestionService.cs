@@ -88,6 +88,13 @@ public class TripSuggestionService : ITripSuggestionService
                 .ThenBy(flight => FlightCabins.MinPrice(flight))
                 .Select(MapFlight)
                 .ToList(),
+            ReturnFlights = flights
+                .Where(flight => TravelCountry.Same(flight.OriginCountry?.Trim() ?? string.Empty, country) &&
+                                 FlightCabins.HasSeats(flight, passengerCount))
+                .OrderBy(flight => flight.DepartureAt)
+                .ThenBy(flight => FlightCabins.MinPrice(flight))
+                .Select(MapFlight)
+                .ToList(),
             Tours = tours
                 .Where(tour => TravelCountry.Same(TravelCountry.OfTour(tour), country) &&
                                passengerCount >= tour.MinGuests && passengerCount <= tour.MaxGuests)

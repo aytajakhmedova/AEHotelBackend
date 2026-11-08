@@ -1180,6 +1180,26 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "AEHotel.API.Controllers.HotelsController",
+    "Method": "FilterOptions",
+    "RelativePath": "api/hotels/filter-options",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "AEHotel.Service.DTOs.Hotels.HotelFilterOptions",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "AEHotel.API.Controllers.LocationsController",
     "Method": "GetAllCities",
     "RelativePath": "api/locations/cities",

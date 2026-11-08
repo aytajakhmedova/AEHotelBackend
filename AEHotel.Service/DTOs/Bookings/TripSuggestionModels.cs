@@ -9,7 +9,11 @@ public class TripSuggestionResponse
 
     public bool Required { get; set; }
 
+    /// <summary>Flights going to the country (the outbound leg).</summary>
     public IReadOnlyList<FlightResponse> Flights { get; set; } = [];
+
+    /// <summary>Flights leaving the country (the return leg of a round trip).</summary>
+    public IReadOnlyList<FlightResponse> ReturnFlights { get; set; } = [];
 
     public IReadOnlyList<TourResponse> Tours { get; set; } = [];
 }

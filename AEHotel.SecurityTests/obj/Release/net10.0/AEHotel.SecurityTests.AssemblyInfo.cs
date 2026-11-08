@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AEHotel.SecurityTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2f1287147a61057856d9006c7f3d8cbed4136873")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+91cab8c03ba5d93b3f4f6b3fcaedbf03f4bf58b7")]
 [assembly: System.Reflection.AssemblyProductAttribute("AEHotel.SecurityTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AEHotel.SecurityTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

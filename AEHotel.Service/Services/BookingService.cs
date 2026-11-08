@@ -99,42 +99,57 @@ public class BookingService : IBookingService
             await using var transaction = await _bookings.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
             try
             {
-                var booking = new Booking
+                // One checkout: the hotel booking plus the flights and tour added to it. They are created together so the
+                // package discount can be verified here, not trusted from the browser.
+                var built = new List<(Booking Booking, BookingRequest Request)>
                 {
-                    Code = CreateCode(),
-                    BookingType = bookingType,
-                    Status = "confirmed",
-                    UserId = userId,
-                    GuestName = request.GuestName.Trim(),
-                    GuestEmail = request.GuestEmail.Trim(),
-                    GuestPhone = request.GuestPhone?.Trim() ?? string.Empty,
-                    SpecialRequests = request.SpecialRequests?.Trim() ?? string.Empty,
-                    Guests = request.Guests,
-                    CreatedAt = DateTime.UtcNow
+                    (await BuildAsync(request, bookingType, userId, cancellationToken), request)
                 };
+                if (bookingType == "hotel" && request.Extras is { Count: > 0 })
+                {
+                    foreach (var extra in request.Extras)
+                    {
+                        var extraType = NormalizeType(extra.BookingType);
+                        if (extraType == "hotel")
+                        {
+                            throw new ValidationException("Otelə yalnız uçuş və ya tur əlavə oluna bilər.");
+                        }
 
-                if (bookingType == "hotel")
-                {
-                    await ApplyHotelAsync(booking, request, excludeBookingId: null, cancellationToken);
-                }
-                else if (bookingType == "flight")
-                {
-                    await ApplyFlightAsync(booking, request, cancellationToken);
-                }
-                else
-                {
-                    await ApplyTourAsync(booking, request, excludeBookingId: null, cancellationToken);
+                        // the guest and payment details are the ones of the checkout
+                        extra.GuestName = request.GuestName;
+                        extra.GuestEmail = request.GuestEmail;
+                        extra.GuestPhone = request.GuestPhone;
+                        extra.PaymentMethod = request.PaymentMethod;
+                        extra.CardNumber = request.CardNumber;
+                        extra.CardHolder = request.CardHolder;
+                        extra.DepositPercent = request.DepositPercent;
+                        ValidateGuest(extra);
+                        built.Add((await BuildAsync(extra, extraType, userId, cancellationToken), extra));
+                    }
                 }
 
-                booking.Payment = CreatePayment(request, booking.TotalPrice);
-                await _bookings.AddAsync(booking, cancellationToken);
+                await ApplyBundlePricingAsync(built, request, cancellationToken);
+                foreach (var (item, itemRequest) in built)
+                {
+                    item.Payment = CreatePayment(itemRequest, item.TotalPrice);
+                    await _bookings.AddAsync(item, cancellationToken);
+                }
+
                 await _bookings.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                var saved = await _bookings.GetByIdAsync(booking.Id, tracking: false, cancellationToken);
-                var response = await MapWithSuggestionsAsync(saved!, cancellationToken);
-                response.EmailSent = await TrySendConfirmationAsync(response, cancellationToken);
-                return response;
+                var responses = new List<BookingResponse>();
+                foreach (var (item, _) in built)
+                {
+                    var saved = await _bookings.GetByIdAsync(item.Id, tracking: false, cancellationToken);
+                    var response = await MapWithSuggestionsAsync(saved!, cancellationToken);
+                    response.EmailSent = await TrySendConfirmationAsync(response, cancellationToken);
+                    responses.Add(response);
+                }
+
+                var main = responses[0];
+                main.Extras = responses.Skip(1).ToList();
+                return main;
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -187,7 +202,19 @@ public class BookingService : IBookingService
             await using var transaction = await _bookings.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
             try
             {
+                // The discount the booking got at checkout (package and coupon) stays: the same share is kept on the new price.
+                var oldList = booking.TotalPrice + booking.DiscountAmount;
+                var keptShare = oldList > 0 ? booking.TotalPrice / oldList : 1m;
+                var keptCoupon = booking.CouponCode;
                 await ApplyHotelAsync(booking, hotelRequest, id, cancellationToken);
+                if (keptShare < 1m)
+                {
+                    var newList = booking.TotalPrice;
+                    booking.TotalPrice = Math.Round(newList * keptShare, 2, MidpointRounding.AwayFromZero);
+                    booking.DiscountAmount = Math.Max(0, newList - booking.TotalPrice);
+                    booking.CouponCode = keptCoupon;
+                }
+
                 if (request.SpecialRequests != null)
                 {
                     booking.SpecialRequests = request.SpecialRequests.Trim();
@@ -632,27 +659,108 @@ public class BookingService : IBookingService
         return value;
     }
 
-    private async Task ApplyPricingAsync(Booking booking, decimal listTotal, BookingRequest request, bool applyAmount, CancellationToken cancellationToken)
+    private async Task<Booking> BuildAsync(BookingRequest request, string bookingType, string userId, CancellationToken cancellationToken)
     {
-        // BundleCombo discount cannot be securely verified in backend because each booking is created separately
-        // Hotel bookings don't include FlightId/TourId, and vice versa
-        // Only coupon codes are verified and applied
-        var afterCombo = listTotal; // Ignore BundleCombo for security - frontend handles package pricing separately
-        var afterCoupon = afterCombo;
-        var couponCode = string.Empty;
-        if (!string.IsNullOrWhiteSpace(request.CouponCode))
+        var booking = new Booking
         {
-            var coupon = await _discounts.GetActiveByCodeAsync(request.CouponCode, cancellationToken, booking.UserId)
+            Code = CreateCode(),
+            BookingType = bookingType,
+            Status = "confirmed",
+            UserId = userId,
+            GuestName = request.GuestName.Trim(),
+            GuestEmail = request.GuestEmail.Trim(),
+            GuestPhone = request.GuestPhone?.Trim() ?? string.Empty,
+            SpecialRequests = request.SpecialRequests?.Trim() ?? string.Empty,
+            Guests = request.Guests,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        if (bookingType == "hotel")
+        {
+            await ApplyHotelAsync(booking, request, excludeBookingId: null, cancellationToken);
+        }
+        else if (bookingType == "flight")
+        {
+            await ApplyFlightAsync(booking, request, cancellationToken);
+        }
+        else
+        {
+            await ApplyTourAsync(booking, request, excludeBookingId: null, cancellationToken);
+        }
+
+        return booking;
+    }
+
+    // The list price only; discounts are worked out for the whole checkout in ApplyBundlePricingAsync.
+    private Task ApplyPricingAsync(Booking booking, decimal listTotal, BookingRequest request, bool applyAmount, CancellationToken cancellationToken)
+    {
+        booking.TotalPrice = listTotal;
+        booking.CouponCode = string.Empty;
+        booking.DiscountAmount = 0;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// The package discount is decided here from what the checkout really contains (hotel + flight and/or tour),
+    /// then the coupon is applied on top. The discount is shared between the bookings by their price.
+    /// </summary>
+    private async Task ApplyBundlePricingAsync(List<(Booking Booking, BookingRequest Request)> items, BookingRequest main, CancellationToken cancellationToken)
+    {
+        var bookings = items.Select(item => item.Booking).ToList();
+        var list = bookings.Sum(item => item.TotalPrice);
+        var after = list;
+
+        var hasFlight = bookings.Any(item => item.BookingType == "flight");
+        var hasTour = bookings.Any(item => item.BookingType == "tour");
+        var hasHotel = bookings.Any(item => item.BookingType == "hotel");
+        var combo = !hasHotel ? null
+            : hasFlight && hasTour ? "hotel_flight_tour"
+            : hasFlight ? "hotel_flight"
+            : hasTour ? "hotel_tour"
+            : null;
+
+        if (combo != null)
+        {
+            var rule = (await _discounts.GetActiveAsync(cancellationToken))
+                .FirstOrDefault(item => string.Equals(item.Combo, combo, StringComparison.OrdinalIgnoreCase));
+            if (rule != null)
+            {
+                after = ApplyPackage(after, rule, applyAmount: true);
+            }
+        }
+
+        var couponCode = string.Empty;
+        if (!string.IsNullOrWhiteSpace(main.CouponCode))
+        {
+            // A coupon is not for a hotel alone: the hotel needs a flight and/or a tour with it
+            if (hasHotel && combo == null)
+            {
+                throw new ValidationException("Kupon yalnız otel ilə birlikdə uçuş və ya tur seçəndə işləyir.");
+            }
+
+            var coupon = await _discounts.GetActiveByCodeAsync(main.CouponCode, cancellationToken, bookings[0].UserId)
                 ?? throw new ValidationException("Kupon kodu keçərsizdir və ya müddəti bitib.");
-            // A personal coupon is used up by its first booking (stored in the database).
-            await _discounts.ConsumeAsync(request.CouponCode, cancellationToken);
-            afterCoupon = ApplyPackage(afterCombo, coupon, applyAmount: true);
+            // A personal coupon is used up by its first checkout (stored in the database).
+            await _discounts.ConsumeAsync(main.CouponCode, cancellationToken);
+            after = ApplyPackage(after, coupon, applyAmount: true);
             couponCode = coupon.Code ?? string.Empty;
         }
 
-        booking.TotalPrice = afterCoupon;
-        booking.CouponCode = couponCode;
-        booking.DiscountAmount = Math.Max(0, Math.Round(listTotal - afterCoupon, 2, MidpointRounding.AwayFromZero));
+        after = Math.Max(0, after);
+        var remaining = after;
+        for (var i = 0; i < bookings.Count; i++)
+        {
+            var item = bookings[i];
+            var listPrice = item.TotalPrice;
+            var share = i == bookings.Count - 1
+                ? remaining
+                : list <= 0 ? 0 : Math.Round(listPrice * after / list, 2, MidpointRounding.AwayFromZero);
+            share = Math.Min(Math.Max(0, share), listPrice);
+            remaining -= share;
+            item.TotalPrice = share;
+            item.CouponCode = couponCode;
+            item.DiscountAmount = Math.Max(0, Math.Round(listPrice - share, 2, MidpointRounding.AwayFromZero));
+        }
     }
 
     private static decimal ApplyPackage(decimal total, DiscountPackageResponse package, bool applyAmount)

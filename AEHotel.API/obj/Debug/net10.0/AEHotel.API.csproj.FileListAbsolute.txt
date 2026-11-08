@@ -841,3 +841,4 @@ C:\temp_ae_out\AEHotel.API.deps.json
 C:\temp_ae_out\AEHotel.API.runtimeconfig.json
 C:\temp_ae_out\AEHotel.API.dll
 C:\temp_ae_out\AEHotel.API.pdb
+C:\Users\Aytac's Noteboob\Desktop\FinalProject\AEHotelBackend\AEHotel.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

@@ -42,6 +42,10 @@ public class HotelsController : ControllerBase
         return Ok(hotels);
     }
 
+    [HttpGet("filter-options")]
+    public async Task<ActionResult<HotelFilterOptions>> FilterOptions(CancellationToken cancellationToken) =>
+        Ok(await _hotelService.GetFilterOptionsAsync(cancellationToken));
+
     [HttpGet("debug")]
     [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult> GetAllDebug(CancellationToken cancellationToken)

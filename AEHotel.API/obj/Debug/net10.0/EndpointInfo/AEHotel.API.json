@@ -1884,6 +1884,35 @@
         }
       }
     },
+    "/api/hotels/filter-options": {
+      "get": {
+        "tags": [
+          "Hotels"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelFilterOptions"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelFilterOptions"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelFilterOptions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/hotels/debug": {
       "get": {
         "tags": [
@@ -5736,6 +5765,11 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "usedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -5907,6 +5941,26 @@
         "properties": {
           "email": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HotelFilterOptions": {
+        "type": "object",
+        "properties": {
+          "hotelTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           }
         },
@@ -7978,6 +8032,13 @@
             "type": "boolean"
           },
           "flights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlightResponse"
+            },
+            "nullable": true
+          },
+          "returnFlights": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FlightResponse"

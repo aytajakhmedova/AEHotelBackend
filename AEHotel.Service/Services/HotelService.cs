@@ -22,6 +22,20 @@ public class HotelService : IHotelService
         _locations = locations;
     }
 
+    public async Task<HotelFilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken = default)
+    {
+        var hotels = await _hotels.GetAllAsync(cancellationToken);
+        return new HotelFilterOptions
+        {
+            HotelTypes = hotels.Select(h => (h.HotelType ?? string.Empty).Trim())
+                .Where(v => v.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(v => v, StringComparer.CurrentCultureIgnoreCase).ToList(),
+            Amenities = hotels.SelectMany(h => JsonLists.ReadStrings(h.AmenitiesJson))
+                .Select(v => v.Trim()).Where(v => v.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(v => v, StringComparer.CurrentCultureIgnoreCase).ToList(),
+        };
+    }
+
     public async Task<IReadOnlyList<HotelResponse>> GetAllAsync(string? city = null, DateOnly? checkIn = null, DateOnly? checkOut = null, int? guests = null, CancellationToken cancellationToken = default, int? adults = null, int? children = null, int? rooms = null, string? country = null, decimal? minPrice = null, decimal? maxPrice = null, string? currency = null, string? stars = null, string? hotelTypes = null, string? amenities = null)
     {
         var hotels = await _hotels.GetAllAsync(cancellationToken);
@@ -179,7 +193,7 @@ public class HotelService : IHotelService
         }
     }
 
-    private async Task<(City City, TouristPlace Place)> ValidateAsync(HotelRequest request, CancellationToken cancellationToken)
+    private async Task<(City City, TouristPlace? Place)> ValidateAsync(HotelRequest request, CancellationToken cancellationToken)
     {
         Validate(request);
 
@@ -193,11 +207,6 @@ public class HotelService : IHotelService
             throw new ValidationException("City is required.");
         }
 
-        if (request.TouristPlaceId is not > 0)
-        {
-            throw new ValidationException("Tourist place is required.");
-        }
-
         var country = await _locations.GetCountryAsync(request.CountryId.Value, cancellationToken)
             ?? throw new ValidationException($"Country with id {request.CountryId} does not exist.");
 
@@ -208,9 +217,15 @@ public class HotelService : IHotelService
             throw new ValidationException($"City '{city.Name}' does not belong to country '{country.Name}'.");
         }
 
-        var place = await _locations.GetTouristPlaceAsync(request.TouristPlaceId.Value, cancellationToken)
-            ?? throw new ValidationException($"Tourist place with id {request.TouristPlaceId} does not exist.");
-        if (place.CityId != city.Id)
+        // The tourist place is optional: without it the hotel is simply placed in the city.
+        TouristPlace? place = null;
+        if (request.TouristPlaceId is > 0)
+        {
+            place = await _locations.GetTouristPlaceAsync(request.TouristPlaceId.Value, cancellationToken)
+                ?? throw new ValidationException($"Tourist place with id {request.TouristPlaceId} does not exist.");
+        }
+
+        if (place != null && place.CityId != city.Id)
         {
             throw new ValidationException($"Tourist place '{place.Name}' does not belong to city '{city.Name}'.");
         }
@@ -218,15 +233,15 @@ public class HotelService : IHotelService
         return (city, place);
     }
 
-    private static void Apply(Hotel hotel, HotelRequest request, (City City, TouristPlace Place) selected)
+    private static void Apply(Hotel hotel, HotelRequest request, (City City, TouristPlace? Place) selected)
     {
         hotel.Title = request.Title.Trim();
         hotel.CityId = selected.City.Id;
-        hotel.TouristPlaceId = selected.Place.Id;
+        hotel.TouristPlaceId = selected.Place?.Id;
         // readable copies of the selected names, kept for search and existing clients
         hotel.City = selected.City.Name;
         hotel.Country = selected.City.Country?.Name ?? string.Empty;
-        hotel.Location = selected.Place.Name;
+        hotel.Location = selected.Place?.Name ?? selected.City.Name;
         hotel.Address = request.Address.Trim();
         hotel.Stars = request.Stars;
         hotel.Description = request.Description.Trim();

@@ -50,22 +50,20 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "dbo.Bookings [Data]",
+              "Title": "dbo.Bookings.sql",
               "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Bookings.sql",
-              "ToolTip": "dbo.Bookings [Data]",
+              "ToolTip": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Bookings.sql",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2026-11-10T12:38:14.836Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-11-10T12:38:14.836Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "dbo.BookingRooms [Data]",
+              "Title": "dbo.BookingRooms.sql",
               "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.BookingRooms.sql",
-              "ToolTip": "dbo.BookingRooms [Data]",
+              "ToolTip": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.BookingRooms.sql",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
-              "WhenOpened": "2026-11-10T12:38:07.022Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-11-10T12:38:07.022Z"
             },
             {
               "$type": "Document",
@@ -77,8 +75,7 @@
               "RelativeToolTip": "AEHotel.Service\\Services\\HotelService.cs",
               "ViewState": "AgIAAB0AAAAAAAAAAAAswCsAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-07T14:48:57.812Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-11-07T14:48:57.812Z"
             },
             {
               "$type": "Document",
@@ -92,9 +89,9 @@
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "dbo.Cities [Data]",
+              "Title": "dbo.Cities.sql",
               "DocumentMoniker": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Cities.sql",
-              "ToolTip": "dbo.Cities [Data]",
+              "ToolTip": "ViewDataWindow_MSSQL__/_localdb__MSSQLLocalDB/AEHotelDb/True/SqlTable/dbo.Cities.sql",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
               "WhenOpened": "2026-11-07T11:23:07.213Z"
             },

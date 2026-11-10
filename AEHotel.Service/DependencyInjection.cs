@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IFlightService, FlightService>();
         services.AddScoped<IAirlineService, AirlineService>();
+        services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<ITourCategoryService, TourCategoryService>();
         services.AddScoped<ITourService, TourService>();
         services.AddScoped<IBookingService, BookingService>();
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IDiscountService, DiscountService>();
         services.AddScoped<IStayReviewService, StayReviewService>();
+        services.AddScoped<IInquiryService, InquiryService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<UserManagementPolicy>();
         services.AddScoped<IAuthService, AuthService>();

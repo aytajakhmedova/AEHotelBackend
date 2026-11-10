@@ -115,12 +115,14 @@ public class TourService : ITourService
         await RequireCategoryAsync(request, cancellationToken);
         var tour = new Tour();
         Apply(tour, request);
-        tour.Hotel = hotel;
+        tour.HotelId = hotel.Id;
         // The destination is always the hotel's city and country, so the country is read correctly everywhere.
         tour.Destination = string.Join(", ", new[] { hotel.City, hotel.Country }.Where(part => !string.IsNullOrWhiteSpace(part)));
         await _tours.AddAsync(tour, cancellationToken);
         await _tours.SaveChangesAsync(cancellationToken);
-        return Map(tour);
+        var created = Map(tour);
+        created.HotelName = hotel.Title;
+        return created;
     }
 
     public async Task<TourResponse> UpdateAsync(int id, TourRequest request, CancellationToken cancellationToken = default)
@@ -131,11 +133,13 @@ public class TourService : ITourService
         var tour = await _tours.GetByIdAsync(id, tracking: true, cancellationToken)
             ?? throw new NotFoundException($"Tour with id {id} was not found.");
         Apply(tour, request);
-        tour.Hotel = hotel;
+        tour.HotelId = hotel.Id;
         // The destination is always the hotel's city and country, so the country is read correctly everywhere.
         tour.Destination = string.Join(", ", new[] { hotel.City, hotel.Country }.Where(part => !string.IsNullOrWhiteSpace(part)));
         await _tours.SaveChangesAsync(cancellationToken);
-        return Map(tour);
+        var updated = Map(tour);
+        updated.HotelName = hotel.Title;
+        return updated;
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)

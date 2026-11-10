@@ -408,6 +408,35 @@ namespace AEHotel.Repository.Migrations
                     b.ToTable("DiscountPackages");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.FavoriteHotel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("HotelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HotelId");
+
+                    b.HasIndex("UserId", "HotelId")
+                        .IsUnique();
+
+                    b.ToTable("FavoriteHotels");
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.Flight", b =>
                 {
                     b.Property<int>("Id")
@@ -636,6 +665,69 @@ namespace AEHotel.Repository.Migrations
                     b.HasIndex("TouristPlaceId");
 
                     b.ToTable("Hotels");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.Inquiry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("HotelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RepliedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Reply")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HotelId", "Status");
+
+                    b.ToTable("Inquiries");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.Payment", b =>
@@ -1649,6 +1741,17 @@ namespace AEHotel.Repository.Migrations
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("AEHotel.Domain.Entities.FavoriteHotel", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.Hotel", "Hotel")
+                        .WithMany()
+                        .HasForeignKey("HotelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Hotel");
+                });
+
             modelBuilder.Entity("AEHotel.Domain.Entities.FlightCabin", b =>
                 {
                     b.HasOne("AEHotel.Domain.Entities.Flight", "Flight")
@@ -1675,6 +1778,16 @@ namespace AEHotel.Repository.Migrations
                     b.Navigation("CityRecord");
 
                     b.Navigation("TouristPlace");
+                });
+
+            modelBuilder.Entity("AEHotel.Domain.Entities.Inquiry", b =>
+                {
+                    b.HasOne("AEHotel.Domain.Entities.Hotel", "Hotel")
+                        .WithMany()
+                        .HasForeignKey("HotelId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Hotel");
                 });
 
             modelBuilder.Entity("AEHotel.Domain.Entities.Payment", b =>

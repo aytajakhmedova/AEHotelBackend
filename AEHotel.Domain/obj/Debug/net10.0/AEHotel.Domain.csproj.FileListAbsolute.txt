@@ -57,3 +57,5 @@ C:\Users\Aytac's Noteboob\AppData\Local\Temp\claude\aad44e0798595f58\a1c681cd-55
 C:\temp_ae_out\AEHotel.Domain.deps.json
 C:\temp_ae_out\AEHotel.Domain.dll
 C:\temp_ae_out\AEHotel.Domain.pdb
+C:\Users\Aytac's Noteboob\AppData\Local\Temp\claude\aad44e0798595f58\3fec0777-b4a0-42d9-81a6-8da4f9c7e37c\scratchpad\buildchk\AEHotel.Domain.deps.json
+C:\Users\Aytac's Noteboob\AppData\Local\Temp\claude\aad44e0798595f58\3fec0777-b4a0-42d9-81a6-8da4f9c7e37c\scratchpad\buildchk\AEHotel.Domain.dll

@@ -46,7 +46,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpGet("reviews")]
-    [Authorize(Roles = AppRoles.CatalogEditors)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<IReadOnlyList<ReviewResponse>>> GetAll(CancellationToken cancellationToken)
     {
         int? scope = User.TryGetHotelScope(out var hotelId) ? hotelId : null;
@@ -66,7 +66,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpPut("reviews/{id:int}/approve")]
-    [Authorize(Roles = AppRoles.CatalogEditors)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<ActionResult<ReviewResponse>> Approve(int id, CancellationToken cancellationToken)
     {
         int? scope = User.TryGetHotelScope(out var hotelId) ? hotelId : null;
@@ -74,7 +74,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpDelete("reviews/{id:int}")]
-    [Authorize(Roles = AppRoles.CatalogEditors)]
+    [Authorize(Roles = AppRoles.Staff)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         int? scope = User.TryGetHotelScope(out var hotelId) ? hotelId : null;

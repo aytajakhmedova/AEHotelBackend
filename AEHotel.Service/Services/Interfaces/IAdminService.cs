@@ -16,5 +16,7 @@ public interface IAdminService
 
     Task DeleteStaffAsync(string id, string currentUserId, CancellationToken cancellationToken = default);
 
+    Task DeleteCustomerAsync(string id, string currentUserId, CancellationToken cancellationToken = default);
+
     Task<ReportResponse> GetReportAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken = default);
 }

@@ -40,6 +40,7 @@ wwwroot\uploads\d0c7d0dbcc104132940c61047557fd52.png
 wwwroot\uploads\d3514d49a0784779a0bd84265cd5e5bb.jpg
 wwwroot\uploads\dubai-luxury.jfif
 wwwroot\uploads\dubai.jpg
+wwwroot\uploads\flights-results-banner.png
 wwwroot\uploads\gabala-adventure.jfif
 wwwroot\uploads\gabala-nature.jfif
 wwwroot\uploads\hero-luxury-resort.png

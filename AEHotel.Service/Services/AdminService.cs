@@ -288,6 +288,35 @@ public class AdminService : IAdminService
         await transaction.CommitAsync(cancellationToken);
     }
 
+    // Deletes a guest account. Their bookings stay for the hotel's records (the link to the account is cleared by the database),
+    // while the personal leftovers (favourites, links in questions) are removed.
+    public async Task DeleteCustomerAsync(string id, string currentUserId, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        var user = await _users.FindByIdAsync(id) ?? throw new NotFoundException("Customer was not found.");
+        var roles = await _users.GetRolesAsync(user);
+        await _management.EnsureCanManageAsync(currentUserId, roles);
+        if (roles.Any(role => StaffRoles.Contains(role)))
+        {
+            throw new ValidationException("This account is staff. Delete it from the staff list.");
+        }
+
+        if (id == currentUserId)
+        {
+            throw new ForbiddenException("You cannot delete your own account.");
+        }
+
+        await _db.FavoriteHotels.Where(item => item.UserId == id).ExecuteDeleteAsync(cancellationToken);
+        await _db.Inquiries.Where(item => item.UserId == id).ExecuteUpdateAsync(set => set.SetProperty(item => item.UserId, (string?)null), cancellationToken);
+
+        var deleted = await _users.DeleteAsync(user);
+        if (!deleted.Succeeded)
+        {
+            throw new ValidationException(string.Join(" ", deleted.Errors.Select(error => error.Description)));
+        }
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     public async Task<ReportResponse> GetReportAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);

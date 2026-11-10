@@ -32,6 +32,13 @@ public class AdminController : ControllerBase
         return Ok(await _admin.GetCustomerBookingsAsync(id, cancellationToken));
     }
 
+    [HttpDelete("customers/{id}")]
+    public async Task<IActionResult> DeleteCustomer(string id, CancellationToken cancellationToken)
+    {
+        await _admin.DeleteCustomerAsync(id, User.GetRequiredUserId(), cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet("staff")]
     public async Task<ActionResult<IReadOnlyList<StaffResponse>>> GetStaff(CancellationToken cancellationToken)
     {
